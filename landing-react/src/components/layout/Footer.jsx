@@ -1,53 +1,74 @@
+import { useState } from 'react';
+import { api } from '../../services/api.js';
+import { Link } from 'react-router-dom';
+
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
 export default function Footer() {
-  const scrollTo = (id) => {
-    document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
+  const [email, setEmail] = useState('');
+  const [status, setStatus] = useState('idle');
+
+  const handleSubscribe = async (e) => {
+    e.preventDefault();
+    if (!EMAIL_RE.test(email)) return;
+    setStatus('sending');
+    try {
+      await api.createMessage({ name: 'Suscriptor Newsletter', email, phone: '', message: 'Suscripción al newsletter' });
+      setStatus('success');
+      setEmail('');
+    } catch {
+      setStatus('error');
+    }
   };
 
   return (
-    <footer id="footer" className="bg-[var(--color-on-background)] text-white pt-16 pb-8">
+    <footer id="footer" className="bg-[var(--color-charcoal)] text-white">
       <div className="max-w-[var(--spacing-container-max)] mx-auto px-[var(--spacing-margin-mobile)] lg:px-[var(--spacing-margin-desktop)]">
-        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-10 mb-12">
-          <div>
-            <h3 className="font-headline text-2xl italic text-[var(--color-secondary)] mb-4" style={{ fontFamily: 'Playfair Display, serif', fontStyle: 'italic', color: '#e9c176' }}>
-              DAIS STORE
+        <div className="py-16 border-b border-white/10">
+          <div className="max-w-md mx-auto text-center">
+            <h3 className="font-manrope font-semibold text-sm uppercase tracking-[0.15em] text-[var(--color-gold)] mb-3">
+              Mantente al Día
             </h3>
-            <p className="font-manrope text-sm text-white/60 leading-relaxed mb-4">
-              Distribuidora Mayorista de productos de belleza y cuidado personal. Calidad premium para tu negocio en toda Colombia.
+            <p className="font-manrope text-sm text-white/60 mb-6">
+              Suscríbete para recibir novedades, promociones exclusivas y consejos de belleza.
             </p>
-            <div className="flex gap-3">
-              {['facebook', 'instagram', 'whatsapp', 'tiktok'].map(icon => {
-                const waNum = import.meta.env.VITE_WHATSAPP_NUMBER || '573000000000';
-                const href = icon === 'whatsapp' ? `https://wa.me/${waNum}` : '#';
-                return (
-                <a
-                  key={icon}
-                  href={href}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="w-9 h-9 rounded-full bg-white/10 flex items-center justify-center hover:bg-[var(--color-secondary)] transition-colors duration-300"
-                >
-                  <span className="material-symbols-outlined text-sm">{icon === 'whatsapp' ? 'call' : icon === 'tiktok' ? 'music_note' : icon}</span>
-                </a>
-              );
-              })}
-            </div>
+            {status === 'success' ? (
+              <p className="text-[var(--color-gold)] font-manrope text-sm">¡Gracias por suscribirte!</p>
+            ) : (
+              <form onSubmit={handleSubscribe} className="flex gap-3 max-w-sm mx-auto">
+                <input
+                  type="email" value={email} placeholder="Tu correo electrónico"
+                  onChange={(e) => { setEmail(e.target.value); setStatus('idle'); }}
+                  className="flex-1 px-4 py-3 bg-white/10 border border-white/20 text-white text-sm font-manrope placeholder:text-white/40 focus:outline-none focus:border-[var(--color-gold)] transition-colors"
+                />
+                <button type="submit" disabled={status === 'sending'}
+                  className="px-6 py-3 bg-[var(--color-gold)] text-[var(--color-charcoal)] font-manrope font-semibold text-xs uppercase tracking-[0.12em] hover:bg-[var(--color-gold-light)] transition-colors disabled:opacity-50">
+                  {status === 'sending' ? '...' : 'SUSCRIBIR'}
+                </button>
+              </form>
+            )}
+          </div>
+        </div>
+
+        <div className="py-12 grid sm:grid-cols-2 lg:grid-cols-4 gap-10">
+          <div>
+            <h3 className="font-headline text-2xl italic text-[var(--color-gold)] mb-4">DAIS STORE</h3>
+            <p className="font-manrope text-sm text-white/50 leading-relaxed">
+              Distribuidora Mayorista de productos de belleza. Calidad premium para tu negocio.
+            </p>
           </div>
           <div>
-            <h4 className="font-manrope font-semibold text-sm uppercase tracking-[0.1em] text-white/80 mb-5">Enlaces Rápidos</h4>
-            <ul className="space-y-3">
+            <h4 className="font-manrope font-semibold text-xs uppercase tracking-[0.15em] text-white/70 mb-5">Enlaces</h4>
+            <ul className="space-y-3 font-manrope text-sm text-white/50">
               {[
-                { label: 'Inicio', target: 'hero' },
                 { label: 'Catálogo', target: 'catalog' },
                 { label: 'Nosotros', target: 'about' },
                 { label: 'Cómo Comprar', target: 'how-it-works' },
                 { label: 'FAQ', target: 'faq' },
-                { label: 'Contacto', target: 'footer' },
               ].map(link => (
                 <li key={link.label}>
-                  <button
-                    onClick={() => scrollTo(link.target)}
-                    className="font-manrope text-sm text-white/60 hover:text-white transition-colors"
-                  >
+                  <button onClick={() => document.getElementById(link.target)?.scrollIntoView({ behavior: 'smooth' })}
+                    className="hover:text-white transition-colors">
                     {link.label}
                   </button>
                 </li>
@@ -55,44 +76,28 @@ export default function Footer() {
             </ul>
           </div>
           <div>
-            <h4 className="font-manrope font-semibold text-sm uppercase tracking-[0.1em] text-white/80 mb-5">Contacto</h4>
-            <ul className="space-y-3">
-              <li className="flex items-start gap-3">
-                <span className="material-symbols-outlined text-[var(--color-secondary)] text-[18px] mt-0.5">location_on</span>
-                <span className="font-manrope text-sm text-white/60">Montería, Córdoba, Colombia</span>
-              </li>
-              <li className="flex items-center gap-3">
-                <span className="material-symbols-outlined text-[var(--color-secondary)] text-[18px]">call</span>
-                <a href="tel:+573000000000" className="font-manrope text-sm text-white/60 hover:text-white transition-colors">+57 300 000 0000</a>
-              </li>
-              <li className="flex items-center gap-3">
-                <span className="material-symbols-outlined text-[var(--color-secondary)] text-[18px]">mail</span>
-                <a href="mailto:info@daisstore.co" className="font-manrope text-sm text-white/60 hover:text-white transition-colors">info@daisstore.co</a>
-              </li>
-              <li className="flex items-center gap-3">
-                <span className="material-symbols-outlined text-[var(--color-secondary)] text-[18px]">schedule</span>
-                <span className="font-manrope text-sm text-white/60">Lun - Sáb: 8:00 AM - 6:00 PM</span>
-              </li>
+            <h4 className="font-manrope font-semibold text-xs uppercase tracking-[0.15em] text-white/70 mb-5">Contacto</h4>
+            <ul className="space-y-3 font-manrope text-sm text-white/50">
+              <li>Montería, Córdoba</li>
+              <li><a href={`tel:${import.meta.env.VITE_WHATSAPP_NUMBER || '+573000000000'}`} className="hover:text-white transition-colors">{import.meta.env.VITE_WHATSAPP_NUMBER || '+57 300 000 0000'}</a></li>
+              <li><a href="mailto:info@daisstore.co" className="hover:text-white transition-colors">info@daisstore.co</a></li>
             </ul>
           </div>
           <div>
-            <h4 className="font-manrope font-semibold text-sm uppercase tracking-[0.1em] text-white/80 mb-5">Medios de Pago</h4>
-            <div className="flex flex-wrap gap-3">
-              {['credit_card', 'account_balance', 'payments', 'smartphone'].map((icon, i) => (
-                <div key={i} className="w-14 h-10 rounded-lg bg-white/10 flex items-center justify-center">
-                  <span className="material-symbols-outlined text-white/60 text-lg">{icon}</span>
-                </div>
-              ))}
-            </div>
-            <p className="font-manrope text-xs text-white/40 mt-4">
-              Aceptamos transferencias, Nequi, Daviplata y tarjetas.
-            </p>
+            <h4 className="font-manrope font-semibold text-xs uppercase tracking-[0.15em] text-white/70 mb-5">Legal</h4>
+            <ul className="space-y-3 font-manrope text-sm text-white/50">
+              <li><a href="#" className="hover:text-white transition-colors">Términos y Condiciones</a></li>
+              <li><a href="#" className="hover:text-white transition-colors">Política de Privacidad</a></li>
+              <li><a href="#" className="hover:text-white transition-colors">Política de Devoluciones</a></li>
+            </ul>
           </div>
         </div>
-        <div className="border-t border-white/10 pt-6 text-center">
-          <p className="font-manrope text-xs text-white/40">
-            &copy; {new Date().getFullYear()} Dais Store. Todos los derechos reservados.
-          </p>
+
+        <div className="py-6 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <p className="font-manrope text-xs text-white/30">&copy; {new Date().getFullYear()} Dais Store. Todos los derechos reservados.</p>
+          <Link to="/admin/login" className="font-manrope text-xs text-white/20 hover:text-white/50 transition-colors">
+            Admin
+          </Link>
         </div>
       </div>
     </footer>
