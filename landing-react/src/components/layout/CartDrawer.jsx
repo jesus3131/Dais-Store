@@ -63,7 +63,7 @@ export default function CartDrawer() {
                 {cartItems.map(item => (
                   <div key={item.id} className="flex gap-4 py-4 border-b border-[var(--color-outline-variant)] last:border-0">
                     <div className="w-20 h-20 rounded-lg bg-[var(--color-surface-container-high)] flex-shrink-0 overflow-hidden">
-                      <img src={item.image_url || item.image || 'https://placehold.co/400x400/e5e2e1/4f4445?text=Sin+Imagen'} alt={item.name} className="w-full h-full object-cover" />
+                      <img src={item.image_url || item.image || 'https://images.unsplash.com/photo-1570194065650-d99fb4ee8e39?w=400&q=80'} alt={item.name} className="w-full h-full object-cover" />
                     </div>
                     <div className="flex-1 min-w-0">
                       <h4 className="font-manrope font-semibold text-sm text-[var(--color-on-surface)] truncate">{item.name}</h4>

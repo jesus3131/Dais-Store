@@ -65,7 +65,7 @@ export default function Catalog() {
               <div key={product.id} className="group bg-white luxury-shadow hover:shadow-lg transition-all duration-300">
                 <div className="relative aspect-square bg-[var(--color-cream)] overflow-hidden">
                   <img
-                    src={product.image_url || 'https://placehold.co/600x600/f0ebe3/2c2c2c?text=DAIS'}
+                    src={product.image_url || 'https://images.unsplash.com/photo-1570194065650-d99fb4ee8e39?w=600&q=80'}
                     alt={product.name}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
                   />
