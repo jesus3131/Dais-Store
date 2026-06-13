@@ -1,34 +1,57 @@
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { CartProvider } from './context/CartContext.jsx';
-import Header from './components/layout/Header.jsx';
-import CartDrawer from './components/layout/CartDrawer.jsx';
-import Hero from './components/sections/Hero.jsx';
-import AboutUs from './components/sections/AboutUs.jsx';
-import HowItWorks from './components/sections/HowItWorks.jsx';
-import Catalog from './components/sections/Catalog.jsx';
-import Testimonials from './components/sections/Testimonials.jsx';
-import FAQ from './components/sections/FAQ.jsx';
-import InstagramFeed from './components/sections/InstagramFeed.jsx';
-import Branding from './components/sections/Branding.jsx';
-import Newsletter from './components/sections/Newsletter.jsx';
-import Footer from './components/layout/Footer.jsx';
+import { AuthProvider } from './context/AuthContext.jsx';
+import LandingPage from './pages/LandingPage.jsx';
+import ProtectedRoute from './components/admin/ProtectedRoute.jsx';
+import AdminLogin from './components/admin/AdminLogin.jsx';
+import AdminLayout from './components/admin/AdminLayout.jsx';
+import AdminDashboard from './components/admin/AdminDashboard.jsx';
+import AdminProducts from './components/admin/AdminProducts.jsx';
+import AdminOrders from './components/admin/AdminOrders.jsx';
+import AdminSettings from './components/admin/AdminSettings.jsx';
 
 export default function App() {
   return (
-    <CartProvider>
-      <Header />
-      <main>
-        <Hero />
-        <AboutUs />
-        <HowItWorks />
-        <Catalog />
-        <Testimonials />
-        <FAQ />
-        <InstagramFeed />
-        <Branding />
-        <Newsletter />
-      </main>
-      <Footer />
-      <CartDrawer />
-    </CartProvider>
+    <BrowserRouter>
+      <AuthProvider>
+        <Routes>
+          <Route path="/" element={
+            <CartProvider>
+              <LandingPage />
+            </CartProvider>
+          } />
+          <Route path="/admin/login" element={<AdminLogin />} />
+          <Route path="/admin" element={
+            <ProtectedRoute>
+              <AdminLayout>
+                <AdminDashboard />
+              </AdminLayout>
+            </ProtectedRoute>
+          } />
+          <Route path="/admin/products" element={
+            <ProtectedRoute>
+              <AdminLayout>
+                <AdminProducts />
+              </AdminLayout>
+            </ProtectedRoute>
+          } />
+          <Route path="/admin/orders" element={
+            <ProtectedRoute>
+              <AdminLayout>
+                <AdminOrders />
+              </AdminLayout>
+            </ProtectedRoute>
+          } />
+          <Route path="/admin/settings" element={
+            <ProtectedRoute>
+              <AdminLayout>
+                <AdminSettings />
+              </AdminLayout>
+            </ProtectedRoute>
+          } />
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </AuthProvider>
+    </BrowserRouter>
   );
 }

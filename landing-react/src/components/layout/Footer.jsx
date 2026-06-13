@@ -15,17 +15,21 @@ export default function Footer() {
               Distribuidora Mayorista de productos de belleza y cuidado personal. Calidad premium para tu negocio en toda Colombia.
             </p>
             <div className="flex gap-3">
-              {['facebook', 'instagram', 'whatsapp', 'tiktok'].map(icon => (
+              {['facebook', 'instagram', 'whatsapp', 'tiktok'].map(icon => {
+                const waNum = import.meta.env.VITE_WHATSAPP_NUMBER || '573000000000';
+                const href = icon === 'whatsapp' ? `https://wa.me/${waNum}` : '#';
+                return (
                 <a
                   key={icon}
-                  href={icon === 'whatsapp' ? 'https://wa.me/573000000000' : '#'}
-                  target={icon === 'whatsapp' ? '_blank' : undefined}
-                  rel={icon === 'whatsapp' ? 'noopener noreferrer' : undefined}
+                  href={href}
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="w-9 h-9 rounded-full bg-white/10 flex items-center justify-center hover:bg-[var(--color-secondary)] transition-colors duration-300"
                 >
                   <span className="material-symbols-outlined text-sm">{icon === 'whatsapp' ? 'call' : icon === 'tiktok' ? 'music_note' : icon}</span>
                 </a>
-              ))}
+              );
+              })}
             </div>
           </div>
           <div>

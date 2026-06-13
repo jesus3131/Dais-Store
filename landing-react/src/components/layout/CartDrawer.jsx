@@ -1,6 +1,7 @@
 import { useCart } from '../../context/CartContext.jsx';
+import { api } from '../../services/api.js';
 
-const WHATSAPP_NUMBER = '573000000000'; // configurable
+const WHATSAPP_NUMBER = import.meta.env.VITE_WHATSAPP_NUMBER || '573000000000';
 
 export default function CartDrawer() {
   const {
@@ -9,6 +10,18 @@ export default function CartDrawer() {
   } = useCart();
 
   const whatsappUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${whatsappMessage}`;
+
+  const handleWhatsApp = () => {
+    api.createOrder({
+      customer_name: 'Cliente Web',
+      phone: WHATSAPP_NUMBER,
+      email: 'cliente@daisstore.com',
+      items: cartItems.map(i => ({ id: i.id, name: i.name, price: i.price, quantity: i.quantity })),
+      total: subtotal,
+      notes: 'Pedido desde la tienda web',
+    }).catch(() => {});
+    window.open(whatsappUrl, '_blank', 'noopener,noreferrer');
+  };
 
   return (
     <>
@@ -50,7 +63,7 @@ export default function CartDrawer() {
                 {cartItems.map(item => (
                   <div key={item.id} className="flex gap-4 py-4 border-b border-[var(--color-outline-variant)] last:border-0">
                     <div className="w-20 h-20 rounded-lg bg-[var(--color-surface-container-high)] flex-shrink-0 overflow-hidden">
-                      <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
+                      <img src={item.image_url || item.image || 'https://placehold.co/400x400/e5e2e1/4f4445?text=Sin+Imagen'} alt={item.name} className="w-full h-full object-cover" />
                     </div>
                     <div className="flex-1 min-w-0">
                       <h4 className="font-manrope font-semibold text-sm text-[var(--color-on-surface)] truncate">{item.name}</h4>
@@ -100,15 +113,13 @@ export default function CartDrawer() {
                   >
                     Vaciar
                   </button>
-                  <a
-                    href={whatsappUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
+                  <button
+                    onClick={handleWhatsApp}
                     className="flex-1 py-3 bg-[#25D366] text-white font-manrope font-semibold text-sm uppercase tracking-[0.1em] rounded-full hover:bg-[#1da851] transition-all flex items-center justify-center gap-2"
                   >
                     <span className="material-symbols-outlined text-[18px]">call</span>
                     WhatsApp
-                  </a>
+                  </button>
                 </div>
               </div>
             </>

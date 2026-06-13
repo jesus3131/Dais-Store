@@ -1,0 +1,54 @@
+@media (max-width: 900px) {
+  .steps-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 40px;
+  }
+  .products-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 600px) {
+  .hero {
+    min-height: 0;
+    padding: 100px 20px 64px;
+  }
+  .hero-bottles {
+    gap: 12px;
+  }
+  .hero-bottle {
+    width: 90px;
+    height: 150px;
+  }
+
+  .how-it-works {
+    padding: var(--section-padding-mobile) 0;
+  }
+  .steps-grid {
+    grid-template-columns: 1fr;
+    max-width: 320px;
+    margin: 0 auto;
+  }
+
+  .product-grid {
+    padding: var(--section-padding-mobile) 0;
+  }
+  .products-grid {
+    grid-template-columns: 1fr;
+    max-width: 400px;
+    margin: 0 auto;
+  }
+
+  .btn-primary {
+    width: 100%;
+    text-align: center;
+  }
+
+  .footer-bar {
+    flex-direction: column;
+    text-align: center;
+  }
+  .footer-contact {
+    justify-content: center;
+  }
+}
