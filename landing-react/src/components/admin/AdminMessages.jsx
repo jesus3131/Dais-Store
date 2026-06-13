@@ -12,7 +12,7 @@ export default function AdminMessages() {
 
   const toggleRead = async (msg) => {
     if (msg.is_read) {
-      await api.markRead(msg.id);
+      await api.markUnread(msg.id);
     } else {
       await api.markRead(msg.id);
     }

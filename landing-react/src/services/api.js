@@ -33,6 +33,7 @@ export const api = {
   getUnreadCount: () => request('/messages/unread-count'),
   createMessage: (data) => request('/messages', { method: 'POST', body: JSON.stringify(data) }),
   markRead: (id) => request(`/messages/${id}/read`, { method: 'PATCH' }),
+  markUnread: (id) => request(`/messages/${id}/unread`, { method: 'PATCH' }),
   deleteMessage: (id) => request(`/messages/${id}`, { method: 'DELETE' }),
 
   // Settings

@@ -7,11 +7,22 @@ import {
 export default function AdminAccounting() {
   const [stats, setStats] = useState(null);
   const [orders, setOrders] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    api.getOrderStats().then(setStats).catch(() => {});
-    api.getOrders().then(setOrders).catch(() => {});
+    Promise.all([
+      api.getOrderStats().then(setStats).catch(() => {}),
+      api.getOrders().then(setOrders).catch(() => {}),
+    ]).finally(() => setLoading(false));
   }, []);
+
+  if (loading) {
+    return (
+      <div className="flex justify-center py-20">
+        <div className="animate-spin rounded-full h-10 w-10 border-4 border-[var(--color-primary)] border-t-transparent" />
+      </div>
+    );
+  }
 
   const totalCost = orders.reduce((sum, o) => sum + Number(o.total), 0);
   const pendingRevenue = orders.filter(o => o.status === 'pending').reduce((sum, o) => sum + Number(o.total), 0);

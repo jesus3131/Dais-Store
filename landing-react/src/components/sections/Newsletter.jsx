@@ -1,19 +1,26 @@
 import { useState } from 'react';
+import { api } from '../../services/api.js';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export default function Newsletter() {
   const [email, setEmail] = useState('');
-  const [status, setStatus] = useState('idle'); // idle | success | error
+  const [status, setStatus] = useState('idle'); // idle | sending | success | error
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!EMAIL_RE.test(email)) {
       setStatus('error');
       return;
     }
-    setStatus('success');
-    setEmail('');
+    setStatus('sending');
+    try {
+      await api.createMessage({ name: 'Suscriptor Newsletter', email, phone: '', message: 'Suscripción al newsletter' });
+      setStatus('success');
+      setEmail('');
+    } catch {
+      setStatus('error');
+    }
   };
 
   return (
