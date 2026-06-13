@@ -31,8 +31,13 @@ export default function Header() {
           <div className="absolute left-1/2 -translate-x-1/2 cursor-pointer" onClick={() => scrollTo('hero')}>
             <span className="font-headline text-xl italic text-[var(--color-gold)]">DAIS STORE</span>
           </div>
-          <div className="flex items-center gap-2">
-            <Link to="/admin/login" className="p-2 hover:opacity-60 transition-opacity" title="Admin">
+          <div className="flex items-center gap-3">
+            <Link to="/admin/login"
+              className="hidden lg:inline-flex items-center gap-1.5 px-3 py-1.5 border border-[var(--color-outline-variant)] text-[10px] font-manrope uppercase tracking-[0.15em] text-[var(--color-warm-gray)] hover:border-[var(--color-gold)] hover:text-[var(--color-gold)] transition-all">
+              <span className="material-symbols-outlined text-[14px]">lock</span>
+              Admin
+            </Link>
+            <Link to="/admin/login" className="lg:hidden p-2 hover:opacity-60 transition-opacity" title="Admin">
               <span className="material-symbols-outlined text-[var(--color-on-surface-variant)] text-[20px]">lock</span>
             </Link>
             <button className="relative p-2" onClick={toggleCart}>
