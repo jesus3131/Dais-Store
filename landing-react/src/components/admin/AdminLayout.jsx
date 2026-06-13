@@ -4,7 +4,12 @@ import { useAuth } from '../../context/AuthContext.jsx';
 const links = [
   { to: '/admin', label: 'Dashboard', icon: 'dashboard' },
   { to: '/admin/products', label: 'Productos', icon: 'inventory_2' },
+  { to: '/admin/inventory', label: 'Inventario', icon: 'shelf_auto' },
   { to: '/admin/orders', label: 'Pedidos', icon: 'receipt_long' },
+  { to: '/admin/messages', label: 'Mensajes', icon: 'mail' },
+  { to: '/admin/catalogs', label: 'Catálogos PDF', icon: 'description' },
+  { to: '/admin/reports', label: 'Reportes', icon: 'bar_chart' },
+  { to: '/admin/accounting', label: 'Contabilidad', icon: 'account_balance' },
   { to: '/admin/settings', label: 'Configuración', icon: 'settings' },
 ];
 
