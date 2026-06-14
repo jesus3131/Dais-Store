@@ -23,14 +23,14 @@ export default function LandingPage() {
       <Header />
       <main ref={pageRef}>
         <Hero />
-        <div className="scroll-reveal"><Branding /></div>
         <div className="scroll-reveal"><HowItWorks /></div>
         <div className="scroll-reveal"><Categories /></div>
         <div className="scroll-reveal"><Catalog /></div>
-        <div className="scroll-reveal"><AboutUs /></div>
         <div className="scroll-reveal"><Testimonials /></div>
-        <div className="scroll-reveal"><InstagramFeed /></div>
+        <div className="scroll-reveal"><Branding /></div>
+        <div className="scroll-reveal"><AboutUs /></div>
         <div className="scroll-reveal"><FAQ /></div>
+        <div className="scroll-reveal"><InstagramFeed /></div>
         <div className="scroll-reveal"><Newsletter /></div>
         <div className="scroll-reveal"><PreFooter /></div>
       </main>

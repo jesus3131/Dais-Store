@@ -7,7 +7,7 @@ const images = [
 
 export default function InstagramFeed() {
   return (
-    <section id="instagram" className="py-16 lg:py-20 bg-white">
+    <section id="instagram" className="py-16 lg:py-20 bg-[var(--color-ivory)]">
       <div className="max-w-[var(--spacing-container-max)] mx-auto px-[var(--spacing-margin-mobile)] lg:px-[var(--spacing-margin-desktop)]">
         <div className="flex items-center justify-between mb-10">
           <div>
