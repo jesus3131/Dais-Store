@@ -9,16 +9,17 @@ const categories = [
 
 export default function Categories() {
   return (
-    <section id="categories" className="py-12 lg:py-16 bg-[var(--color-surface-container)]">
-      <div className="max-w-[var(--spacing-container-max)] mx-auto px-[var(--spacing-margin-mobile)] lg:px-[var(--spacing-margin-desktop)]">
+    <section id="categories" className="py-12 lg:py-16 bg-[var(--color-surface-container)] relative overflow-hidden">
+      <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(ellipse_at_50%_0%,rgba(212,175,55,0.06)_0%,transparent_70%)]" aria-hidden="true" />
+      <div className="max-w-[var(--spacing-container-max)] mx-auto px-[var(--spacing-margin-mobile)] lg:px-[var(--spacing-margin-desktop)] relative">
         <div className="text-center mb-8">
           <span className="font-inter text-[10px] uppercase tracking-[0.2em] text-[var(--color-gold)] font-medium">Categorías</span>
-          <h2 className="font-headline text-[24px] lg:text-[var(--text-headline-xl)] text-[var(--color-near-black)] mt-2">
+          <h2 className="font-display text-[26px] lg:text-[var(--text-display-md)] text-[var(--color-near-black)] mt-1.5 leading-tight">
             Explora por categoría
           </h2>
         </div>
 
-        <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 lg:gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-3 lg:gap-5">
           {categories.map((cat, i) => (
             <a
               key={i}
@@ -27,24 +28,35 @@ export default function Categories() {
                 e.preventDefault();
                 document.getElementById('catalog')?.scrollIntoView({ behavior: 'smooth' });
               }}
-              className="category-card group relative aspect-[5/6] block rounded-xl overflow-hidden border border-[var(--color-gold)]/10"
-              style={{ animationDelay: `${i * 80}ms` }}
+              className={`category-card group relative block overflow-hidden ${i % 3 === 1 ? 'aspect-[5/6]' : 'aspect-[4/5]'}`}
+              style={{ animationDelay: `${i * 90}ms` }}
             >
-              <img
-                src={cat.image}
-                alt={cat.name}
-                className="w-full h-full object-cover"
-                loading="lazy"
-              />
-              <div className="category-overlay absolute inset-0" />
-              <div className="absolute bottom-0 left-0 right-0 p-4 z-10">
-                <h3 className="font-headline text-[16px] lg:text-[20px] text-white leading-tight">
-                  {cat.name}
-                </h3>
-                <span className="font-inter text-[10px] uppercase tracking-[0.18em] text-[var(--color-gold)]/80">
-                  {cat.count} productos
-                </span>
+              <div className="absolute inset-0 overflow-hidden">
+                <img
+                  src={cat.image}
+                  alt={cat.name}
+                  className="w-full h-full object-cover"
+                  loading="lazy"
+                />
               </div>
+              <div className="category-overlay absolute inset-0" />
+              <div className="category-shimmer absolute inset-0 opacity-0 group-hover:opacity-100 pointer-events-none" />
+              <div className="category-frame absolute inset-0 opacity-0 group-hover:opacity-100" />
+              <div className="absolute bottom-0 left-0 right-0 p-5 z-10">
+                <div className="overflow-hidden">
+                  <h3 className="font-display text-[18px] lg:text-[24px] text-white leading-tight translate-y-0 group-hover:-translate-y-px transition-transform duration-500">
+                    {cat.name}
+                  </h3>
+                </div>
+                <div className="flex items-center gap-2 mt-1.5">
+                  <span className="block w-6 h-px bg-[var(--color-gold)] category-gold-rule" />
+                  <span className="font-inter text-[9px] uppercase tracking-[0.18em] text-[var(--color-gold)]/90">
+                    {cat.count} productos
+                  </span>
+                </div>
+              </div>
+              <div className="absolute top-0 left-0 h-px bg-[var(--color-gold)] category-border-top" />
+              <div className="absolute bottom-0 right-0 h-px bg-[var(--color-gold)] category-border-bottom" />
             </a>
           ))}
         </div>
