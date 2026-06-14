@@ -1,5 +1,7 @@
-import { NavLink, useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { NavLink, useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext.jsx';
+import { api } from '../../services/api.js';
 
 const links = [
   { to: '/admin', label: 'Dashboard', icon: 'dashboard' },
@@ -8,64 +10,67 @@ const links = [
   { to: '/admin/orders', label: 'Pedidos', icon: 'receipt_long' },
   { to: '/admin/messages', label: 'Mensajes', icon: 'mail' },
   { to: '/admin/catalogs', label: 'Catálogos PDF', icon: 'description' },
+  { to: '/admin/import', label: 'Importar Excel', icon: 'upload_file' },
   { to: '/admin/reports', label: 'Reportes', icon: 'bar_chart' },
   { to: '/admin/accounting', label: 'Contabilidad', icon: 'account_balance' },
+  { to: '/admin/site-design', label: 'Diseño del Sitio', icon: 'palette' },
   { to: '/admin/settings', label: 'Configuración', icon: 'settings' },
 ];
 
 export default function AdminLayout({ children }) {
   const { logout } = useAuth();
   const navigate = useNavigate();
+  const [unread, setUnread] = useState(0);
 
-  const handleLogout = () => {
-    logout();
-    navigate('/admin/login');
-  };
+  useEffect(() => {
+    api.getUnreadCount().then(d => setUnread(d.count)).catch(() => {});
+    const interval = setInterval(() => {
+      api.getUnreadCount().then(d => setUnread(d.count)).catch(() => {});
+    }, 15000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const handleLogout = () => { logout(); navigate('/admin/login'); };
 
   return (
-    <div className="min-h-screen bg-[var(--color-surface)] flex">
-      <aside className="w-64 bg-white border-r border-[var(--color-outline-variant)] flex flex-col">
-        <div className="p-6 border-b border-[var(--color-outline-variant)]">
-          <h2 className="font-headline text-lg text-[var(--color-on-surface)]">Dais Store</h2>
-          <p className="font-manrope text-xs text-[var(--color-outline)]">Panel Administrativo</p>
+    <div className="min-h-screen bg-[var(--color-ivory)] flex">
+      <aside className="w-64 bg-[var(--color-near-black)] text-white flex flex-col flex-shrink-0">
+        <div className="p-6 border-b border-white/5">
+          <Link to="/" className="font-display text-xl italic text-[var(--color-gold)]">DAIS</Link>
+          <p className="font-inter text-[10px] text-white/30 uppercase tracking-[0.15em] mt-1">Panel Admin</p>
         </div>
-        <nav className="flex-1 p-4 space-y-1">
+        <nav className="flex-1 p-4 space-y-0.5 overflow-y-auto">
           {links.map(link => (
-            <NavLink
-              key={link.to}
-              to={link.to}
-              end={link.to === '/admin'}
+            <NavLink key={link.to} to={link.to} end={link.to === '/admin'}
               className={({ isActive }) =>
-                `flex items-center gap-3 px-4 py-2.5 rounded-lg font-manrope text-sm transition-all ${
-                  isActive
-                    ? 'bg-[var(--color-primary-container)] text-[var(--color-primary)] font-semibold'
-                    : 'text-[var(--color-on-surface-variant)] hover:bg-[var(--color-surface-container-high)]'
+                `flex items-center gap-3 px-4 py-2.5 font-inter text-sm transition-all ${
+                  isActive ? 'bg-white/5 text-[var(--color-gold)] font-medium' : 'text-white/50 hover:text-white hover:bg-white/5'
                 }`
-              }
-            >
-              <span className="material-symbols-outlined text-[20px]">{link.icon}</span>
-              {link.label}
+              }>
+              <span className="material-symbols-outlined text-[18px]">{link.icon}</span>
+              <span className="flex-1">{link.label}</span>
+              {link.to === '/admin/messages' && unread > 0 && (
+                <span className="px-2 py-0.5 bg-[var(--color-gold)] text-[var(--color-near-black)] text-[10px] font-bold">{unread}</span>
+              )}
             </NavLink>
           ))}
         </nav>
-        <div className="p-4 border-t border-[var(--color-outline-variant)]">
-          <button
-            onClick={handleLogout}
-            className="flex items-center gap-3 px-4 py-2.5 rounded-lg font-manrope text-sm text-[var(--color-on-surface-variant)] hover:bg-[var(--color-surface-container-high)] transition-all w-full"
-          >
-            <span className="material-symbols-outlined text-[20px]">logout</span>
+        <div className="p-4 border-t border-white/5 space-y-1">
+          <button onClick={handleLogout}
+            className="flex items-center gap-3 px-4 py-2.5 w-full font-inter text-sm text-white/40 hover:text-white hover:bg-white/5 transition-all">
+            <span className="material-symbols-outlined text-[18px]">logout</span>
             Cerrar Sesión
           </button>
-          <a
-            href="/"
-            className="flex items-center gap-3 px-4 py-2.5 rounded-lg font-manrope text-sm text-[var(--color-on-surface-variant)] hover:bg-[var(--color-surface-container-high)] transition-all mt-1"
-          >
-            <span className="material-symbols-outlined text-[20px]">arrow_back</span>
+          <a href="/"
+            className="flex items-center gap-3 px-4 py-2.5 font-inter text-sm text-white/40 hover:text-white hover:bg-white/5 transition-all">
+            <span className="material-symbols-outlined text-[18px]">arrow_back</span>
             Volver a la Tienda
           </a>
         </div>
       </aside>
-      <main className="flex-1 p-8 overflow-y-auto">{children}</main>
+      <main className="flex-1 overflow-y-auto">
+        <div className="max-w-7xl mx-auto p-8">{children}</div>
+      </main>
     </div>
   );
 }

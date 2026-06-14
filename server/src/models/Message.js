@@ -47,3 +47,11 @@ export async function getUnreadCount() {
   );
   return Number(rows[0].count);
 }
+
+export async function addReply(id, reply) {
+  const { rows } = await pool.query(
+    'UPDATE messages SET reply = $2, is_read = TRUE WHERE id = $1 RETURNING *',
+    [id, reply],
+  );
+  return rows[0] || null;
+}

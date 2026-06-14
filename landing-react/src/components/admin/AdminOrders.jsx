@@ -1,96 +1,97 @@
 import { useState, useEffect } from 'react';
 import { api } from '../../services/api.js';
+import { useToast } from '../../context/ToastContext.jsx';
 
 const STATUS_COLORS = {
-  pending: 'bg-amber-50 text-amber-700',
-  shipped: 'bg-blue-50 text-blue-700',
-  delivered: 'bg-green-50 text-green-700',
-  cancelled: 'bg-red-50 text-red-700',
+  pending: 'border-l-amber-400 bg-amber-50/50 text-amber-700',
+  shipped: 'border-l-blue-400 bg-blue-50/50 text-blue-700',
+  delivered: 'border-l-green-400 bg-green-50/50 text-green-700',
+  cancelled: 'border-l-red-400 bg-red-50/50 text-red-700',
 };
+
+const STATUS_LABELS = { pending: 'Pendiente', shipped: 'Enviado', delivered: 'Entregado', cancelled: 'Cancelado' };
 
 export default function AdminOrders() {
   const [orders, setOrders] = useState([]);
   const [filter, setFilter] = useState('');
+  const { addToast } = useToast();
 
-  const load = () => {
-    api.getOrders(filter || undefined).then(setOrders).catch(() => {});
-  };
-
+  const load = () => { api.getOrders(filter || undefined).then(setOrders).catch(() => {}); };
   useEffect(load, [filter]);
 
   const updateStatus = async (id, status) => {
     await api.updateOrderStatus(id, status);
-    load();
+    addToast(`Pedido marcado como ${STATUS_LABELS[status] || status}`); load();
   };
 
   const handleDelete = async (id) => {
     if (!window.confirm('¿Eliminar esta orden?')) return;
-    await api.deleteOrder(id);
-    load();
+    await api.deleteOrder(id); addToast('Pedido eliminado', 'info'); load();
   };
 
   return (
-    <div>
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="font-headline text-2xl text-[var(--color-on-surface)]">Pedidos</h1>
+    <div className="max-w-6xl">
+      <div className="flex items-center justify-between mb-10">
+        <div>
+          <h1 className="font-headline text-3xl text-[var(--color-near-black)]">Pedidos</h1>
+          <p className="font-inter text-sm text-[var(--color-on-surface-variant)] mt-1">{orders.length} pedido{orders.length !== 1 ? 's' : ''}{filter ? ` · ${STATUS_LABELS[filter]}` : ''}</p>
+        </div>
         <div className="flex gap-2">
           {['', 'pending', 'shipped', 'delivered', 'cancelled'].map(s => (
             <button key={s} onClick={() => setFilter(s)}
-              className={`px-4 py-2 rounded-full font-manrope text-xs transition-all ${
-                filter === s ? 'bg-[var(--color-primary)] text-white' : 'bg-white border border-[var(--color-outline-variant)] text-[var(--color-on-surface-variant)]'
-              }`}
-            >
-              {s ? s.charAt(0).toUpperCase() + s.slice(1) : 'Todos'}
+              className={`px-5 py-2.5 font-inter text-[10px] uppercase tracking-[0.15em] transition-all duration-300 ${
+                filter === s ? 'bg-[var(--color-near-black)] text-white' : 'bg-white border border-[var(--color-warm-gray)] text-[var(--color-on-surface-variant)] hover:border-[var(--color-near-black)]'
+              }`}>
+              {s ? STATUS_LABELS[s] : 'Todos'}
             </button>
           ))}
         </div>
       </div>
-      <div className="bg-white rounded-xl luxury-shadow overflow-x-auto">
-        <table className="w-full font-manrope text-sm">
+
+      <div className="bg-white border border-[var(--color-warm-gray)]/40 overflow-x-auto">
+        <table className="w-full">
           <thead>
-            <tr className="border-b border-[var(--color-outline-variant)]">
-              <th className="text-left p-4 text-[var(--color-outline)] font-semibold">Cliente</th>
-              <th className="text-left p-4 text-[var(--color-outline)] font-semibold">Teléfono</th>
-              <th className="text-left p-4 text-[var(--color-outline)] font-semibold">Items</th>
-              <th className="text-left p-4 text-[var(--color-outline)] font-semibold">Total</th>
-              <th className="text-left p-4 text-[var(--color-outline)] font-semibold">Estado</th>
-              <th className="text-left p-4 text-[var(--color-outline)] font-semibold">Fecha</th>
-              <th className="text-right p-4 text-[var(--color-outline)] font-semibold">Acciones</th>
+            <tr className="border-b border-[var(--color-warm-gray)]/40">
+              <th className="text-left p-5 font-inter text-[10px] uppercase tracking-[0.15em] text-[var(--color-on-surface-variant)] font-medium bg-[var(--color-ivory)]">Cliente</th>
+              <th className="text-left p-5 font-inter text-[10px] uppercase tracking-[0.15em] text-[var(--color-on-surface-variant)] font-medium bg-[var(--color-ivory)]">Items</th>
+              <th className="text-left p-5 font-inter text-[10px] uppercase tracking-[0.15em] text-[var(--color-on-surface-variant)] font-medium bg-[var(--color-ivory)]">Total</th>
+              <th className="text-left p-5 font-inter text-[10px] uppercase tracking-[0.15em] text-[var(--color-on-surface-variant)] font-medium bg-[var(--color-ivory)]">Estado</th>
+              <th className="text-left p-5 font-inter text-[10px] uppercase tracking-[0.15em] text-[var(--color-on-surface-variant)] font-medium bg-[var(--color-ivory)]">Fecha</th>
+              <th className="text-right p-5 font-inter text-[10px] uppercase tracking-[0.15em] text-[var(--color-on-surface-variant)] font-medium bg-[var(--color-ivory)]">Acciones</th>
             </tr>
           </thead>
           <tbody>
             {orders.map(o => (
-              <tr key={o.id} className="border-b border-[var(--color-outline-variant)] last:border-0 hover:bg-[var(--color-surface-container-high)] transition-colors">
-                <td className="p-4">
-                  <p className="text-[var(--color-on-surface)] font-semibold">{o.customer_name}</p>
-                  <p className="text-[var(--color-outline)] text-xs">{o.email}</p>
+              <tr key={o.id} className="border-b border-[var(--color-warm-gray)]/20 hover:bg-[var(--color-ivory)]/50 transition-colors">
+                <td className="p-5">
+                  <p className="font-headline text-sm text-[var(--color-near-black)]">{o.customer_name}</p>
+                  <p className="font-inter text-xs text-[var(--color-on-surface-variant)] mt-0.5">{o.email} {o.phone ? `· ${o.phone}` : ''}</p>
                 </td>
-                <td className="p-4 text-[var(--color-on-surface)]">{o.phone}</td>
-                <td className="p-4">
+                <td className="p-5">
                   {(typeof o.items === 'string' ? JSON.parse(o.items) : o.items).map((item, i) => (
-                    <span key={i} className="block text-[var(--color-on-surface-variant)] text-xs">{item.name} x{item.quantity}</span>
+                    <span key={i} className="block font-inter text-xs text-[var(--color-on-surface-variant)]">{item.name} <span className="text-[var(--color-gold)]">x{item.quantity}</span></span>
                   ))}
                 </td>
-                <td className="p-4 font-semibold text-[var(--color-on-surface)]">${Number(o.total).toFixed(2)}</td>
-                <td className="p-4">
+                <td className="p-5 font-headline text-sm font-semibold text-[var(--color-near-black)]">${Number(o.total).toLocaleString()}</td>
+                <td className="p-5">
                   <select value={o.status} onChange={e => updateStatus(o.id, e.target.value)}
-                    className={`px-3 py-1 rounded-full text-xs font-semibold border-0 cursor-pointer ${STATUS_COLORS[o.status] || 'bg-gray-50 text-gray-700'}`}>
+                    className={`px-3 py-1.5 font-inter text-[10px] uppercase tracking-[0.08em] border-l-2 cursor-pointer ${STATUS_COLORS[o.status] || 'border-l-gray-300 bg-gray-50 text-gray-700'}`}>
                     <option value="pending">Pendiente</option>
                     <option value="shipped">Enviado</option>
                     <option value="delivered">Entregado</option>
                     <option value="cancelled">Cancelado</option>
                   </select>
                 </td>
-                <td className="p-4 text-[var(--color-outline)] text-xs">{new Date(o.created_at).toLocaleDateString()}</td>
-                <td className="p-4 text-right">
-                  <button onClick={() => handleDelete(o.id)} className="p-2 text-[var(--color-outline)] hover:text-red-500 transition-colors" title="Eliminar">
-                    <span className="material-symbols-outlined">delete</span>
+                <td className="p-5 font-inter text-xs text-[var(--color-on-surface-variant)]">{new Date(o.created_at).toLocaleDateString('es-CO')}</td>
+                <td className="p-5 text-right">
+                  <button onClick={() => handleDelete(o.id)} className="p-2 text-[var(--color-on-surface-variant)] hover:text-red-500 transition-colors" title="Eliminar">
+                    <span className="material-symbols-outlined text-[18px]">delete</span>
                   </button>
                 </td>
               </tr>
             ))}
             {orders.length === 0 && (
-              <tr><td colSpan={7} className="p-8 text-center text-[var(--color-outline)]">No hay pedidos</td></tr>
+              <tr><td colSpan={6} className="p-16 text-center font-inter text-sm text-[var(--color-on-surface-variant)]">No hay pedidos {filter ? `en estado "${STATUS_LABELS[filter]}"` : ''}</td></tr>
             )}
           </tbody>
         </table>

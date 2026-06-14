@@ -35,6 +35,7 @@ export const api = {
   markRead: (id) => request(`/messages/${id}/read`, { method: 'PATCH' }),
   markUnread: (id) => request(`/messages/${id}/unread`, { method: 'PATCH' }),
   deleteMessage: (id) => request(`/messages/${id}`, { method: 'DELETE' }),
+  replyMessage: (id, reply) => request(`/messages/${id}/reply`, { method: 'PATCH', body: JSON.stringify({ reply }) }),
 
   // Settings
   getSettings: () => request('/settings'),

@@ -1,43 +1,32 @@
-export default function HowItWorks() {
-  const steps = [
-    { icon: 'search', title: 'Explora', desc: 'Navega por nuestro catálogo y descubre los productos que se adapten a tu negocio.' },
-    { icon: 'shopping_bag', title: 'Agrega', desc: 'Selecciona los productos que necesites y agrégalos a tu carrito de compras.' },
-    { icon: 'support_agent', title: 'Asesoría', desc: 'Recibe atención personalizada de nuestro equipo para resolver tus dudas.' },
-    { icon: 'local_shipping', title: 'Recibe', desc: 'Recibe tus productos en la puerta de tu negocio con envíos rápidos a toda Colombia.' },
-  ];
+const steps = [
+  { icon: 'search', title: 'Descubre', desc: 'Explora nuestra colección curada de productos premium para el cuidado personal.' },
+  { icon: 'checklist', title: 'Selecciona', desc: 'Elige los productos que mejor se adapten a tu estilo y necesidades.' },
+  { icon: 'auto_awesome', title: 'Personaliza', desc: 'Recibe asesoría personalizada de nuestros expertos en belleza.' },
+  { icon: 'local_shipping', title: 'Recibe', desc: 'Disfruta de envíos rápidos y empaques premium que cuidan cada detalle.' },
+];
 
+export default function HowItWorks() {
   return (
-    <section id="how-it-works" className="py-24 lg:py-32 bg-[var(--color-surface)]">
+    <section id="benefits" className="py-28 lg:py-36 bg-white">
       <div className="max-w-[var(--spacing-container-max)] mx-auto px-[var(--spacing-margin-mobile)] lg:px-[var(--spacing-margin-desktop)]">
-        <div className="text-center mb-16">
-          <span className="inline-block text-[var(--color-label-sm)] uppercase tracking-[0.2em] text-[var(--color-secondary)] mb-4 font-manrope font-semibold">
-            Cómo Funciona
-          </span>
-          <h2 className="font-headline text-[var(--text-headline-lg)] text-[var(--color-on-background)]">
-            Compra en <span className="text-[var(--color-secondary)]">3 Pasos</span>
+        <div className="text-center mb-20">
+          <span className="font-inter text-[10px] uppercase tracking-[0.2em] text-[var(--color-gold)] font-medium">Experiencia Premium</span>
+          <div className="section-divider mt-4" />
+          <h2 className="font-headline text-[var(--text-display-md)] text-[var(--color-near-black)] mt-6">
+            Una experiencia de compra excepcional
           </h2>
         </div>
-        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-8">
+        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-12 lg:gap-8 stagger-children">
           {steps.map((step, i) => (
-            <div key={i} className="relative text-center group">
-              <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-[var(--color-primary-container)] flex items-center justify-center group-hover:bg-[var(--color-secondary-container)] transition-colors duration-300">
-                <span className="material-symbols-outlined text-[var(--color-primary)] text-3xl">{step.icon}</span>
+            <div key={i} className="text-center group">
+              <div className="w-16 h-16 mx-auto mb-6 flex items-center justify-center rounded-full bg-[var(--color-gold-soft)] group-hover:bg-[var(--color-gold)] transition-all duration-500 group-hover:shadow-gold">
+                <span className="material-symbols-outlined text-[var(--color-gold)] text-2xl group-hover:text-white transition-colors duration-500">{step.icon}</span>
               </div>
-              <span className="inline-block text-4xl font-serif font-bold text-[var(--color-secondary)]/20 absolute -top-4 right-0 lg:right-8">0{i + 1}</span>
-              <h3 className="font-headline text-[var(--text-headline-md)] text-[var(--color-on-surface)] mb-3">{step.title}</h3>
-              <p className="font-body-md text-[var(--color-on-surface-variant)]">{step.desc}</p>
+              <h3 className="font-headline text-[var(--text-headline-lg)] text-[var(--color-near-black)] mb-3">{step.title}</h3>
+              <div className="w-8 h-[1px] bg-[var(--color-gold)] mx-auto mb-4 opacity-50" />
+              <p className="font-body text-[var(--color-on-surface-variant)] leading-relaxed text-sm">{step.desc}</p>
             </div>
           ))}
-        </div>
-        <div className="text-center mt-16">
-          <a
-            href="#catalog"
-            className="inline-flex items-center gap-2 px-8 py-4 bg-[var(--color-primary)] text-white font-manrope font-semibold text-sm uppercase tracking-[0.1em] rounded-full hover:bg-[var(--color-on-tertiary-container)] transition-all duration-300"
-            onClick={(e) => { e.preventDefault(); document.getElementById('catalog')?.scrollIntoView({ behavior: 'smooth' }); }}
-          >
-            Comprar Ahora
-            <span className="material-symbols-outlined text-[18px]">arrow_forward</span>
-          </a>
         </div>
       </div>
     </section>

@@ -13,91 +13,77 @@ export default function Footer() {
     if (!EMAIL_RE.test(email)) return;
     setStatus('sending');
     try {
-      await api.createMessage({ name: 'Suscriptor Newsletter', email, phone: '', message: 'Suscripción al newsletter' });
+      await api.createMessage({ name: 'Suscriptor Footer', email, phone: '', message: 'Suscripción footer' });
       setStatus('success');
       setEmail('');
-    } catch {
-      setStatus('error');
-    }
+    } catch { setStatus('error'); }
   };
 
   return (
-    <footer id="footer" className="bg-[var(--color-charcoal)] text-white">
+    <footer id="footer" className="bg-[var(--color-near-black)]">
       <div className="max-w-[var(--spacing-container-max)] mx-auto px-[var(--spacing-margin-mobile)] lg:px-[var(--spacing-margin-desktop)]">
-        <div className="py-16 border-b border-white/10">
-          <div className="max-w-md mx-auto text-center">
-            <h3 className="font-manrope font-semibold text-sm uppercase tracking-[0.15em] text-[var(--color-gold)] mb-3">
-              Mantente al Día
-            </h3>
-            <p className="font-manrope text-sm text-white/60 mb-6">
-              Suscríbete para recibir novedades, promociones exclusivas y consejos de belleza.
+        <div className="py-20 grid sm:grid-cols-2 lg:grid-cols-4 gap-12 lg:gap-16">
+          <div className="sm:col-span-2 lg:col-span-1">
+            <span className="font-display text-3xl italic text-[var(--color-gold)]">DAIS</span>
+            <p className="font-inter text-xs text-white/30 leading-relaxed mt-4 max-w-xs">
+              Distribuidora mayorista de productos de belleza premium. Calidad excepcional para tu negocio.
             </p>
-            {status === 'success' ? (
-              <p className="text-[var(--color-gold)] font-manrope text-sm">¡Gracias por suscribirte!</p>
-            ) : (
-              <form onSubmit={handleSubscribe} className="flex gap-3 max-w-sm mx-auto">
-                <input
-                  type="email" value={email} placeholder="Tu correo electrónico"
-                  onChange={(e) => { setEmail(e.target.value); setStatus('idle'); }}
-                  className="flex-1 px-4 py-3 bg-white/10 border border-white/20 text-white text-sm font-manrope placeholder:text-white/40 focus:outline-none focus:border-[var(--color-gold)] transition-colors"
-                />
-                <button type="submit" disabled={status === 'sending'}
-                  className="px-6 py-3 bg-[var(--color-gold)] text-[var(--color-charcoal)] font-manrope font-semibold text-xs uppercase tracking-[0.12em] hover:bg-[var(--color-gold-light)] transition-colors disabled:opacity-50">
-                  {status === 'sending' ? '...' : 'SUSCRIBIR'}
-                </button>
-              </form>
-            )}
-          </div>
-        </div>
-
-        <div className="py-12 grid sm:grid-cols-2 lg:grid-cols-4 gap-10">
-          <div>
-            <h3 className="font-headline text-2xl italic text-[var(--color-gold)] mb-4">DAIS STORE</h3>
-            <p className="font-manrope text-sm text-white/50 leading-relaxed">
-              Distribuidora Mayorista de productos de belleza. Calidad premium para tu negocio.
-            </p>
-          </div>
-          <div>
-            <h4 className="font-manrope font-semibold text-xs uppercase tracking-[0.15em] text-white/70 mb-5">Enlaces</h4>
-            <ul className="space-y-3 font-manrope text-sm text-white/50">
+            <div className="flex gap-4 mt-6">
               {[
-                { label: 'Catálogo', target: 'catalog' },
-                { label: 'Nosotros', target: 'about' },
-                { label: 'Cómo Comprar', target: 'how-it-works' },
-                { label: 'FAQ', target: 'faq' },
-              ].map(link => (
-                <li key={link.label}>
-                  <button onClick={() => document.getElementById(link.target)?.scrollIntoView({ behavior: 'smooth' })}
-                    className="hover:text-white transition-colors">
-                    {link.label}
-                  </button>
+                { icon: 'instagram', label: 'Instagram' },
+                { icon: 'facebook', label: 'Facebook' },
+                { icon: 'music_note', label: 'TikTok' },
+                { icon: 'chat', label: 'WhatsApp' },
+              ].map(s => (
+                <a key={s.label} href="#" className="w-10 h-10 rounded-full border border-white/10 flex items-center justify-center hover:border-[var(--color-gold)] hover:bg-[var(--color-gold)]/10 transition-all group" aria-label={s.label}>
+                  <span className="material-symbols-outlined text-white/50 text-[16px] group-hover:text-[var(--color-gold)] transition-colors">{s.icon}</span>
+                </a>
+              ))}
+            </div>
+          </div>
+          <div>
+            <h4 className="font-inter text-[11px] uppercase tracking-[0.18em] text-white/70 mb-6">Empresa</h4>
+            <ul className="space-y-3 font-inter text-sm text-white/30">
+              {['Nosotros', 'Historia', 'Blog'].map(item => (
+                <li key={item}>
+                  <button onClick={() => document.getElementById('about')?.scrollIntoView({ behavior: 'smooth' })}
+                    className="hover:text-[var(--color-gold)] transition-colors">{item}</button>
                 </li>
               ))}
             </ul>
           </div>
           <div>
-            <h4 className="font-manrope font-semibold text-xs uppercase tracking-[0.15em] text-white/70 mb-5">Contacto</h4>
-            <ul className="space-y-3 font-manrope text-sm text-white/50">
-              <li>Montería, Córdoba</li>
-              <li><a href={`tel:${import.meta.env.VITE_WHATSAPP_NUMBER || '+573000000000'}`} className="hover:text-white transition-colors">{import.meta.env.VITE_WHATSAPP_NUMBER || '+57 300 000 0000'}</a></li>
-              <li><a href="mailto:info@daisstore.co" className="hover:text-white transition-colors">info@daisstore.co</a></li>
+            <h4 className="font-inter text-[11px] uppercase tracking-[0.18em] text-white/70 mb-6">Ayuda</h4>
+            <ul className="space-y-3 font-inter text-sm text-white/30">
+              {[
+                { label: 'Contacto', target: 'footer' },
+                { label: 'FAQ', target: 'faq' },
+                { label: 'Envíos', target: 'faq' },
+              ].map(item => (
+                <li key={item.label}>
+                  <button onClick={() => document.getElementById(item.target)?.scrollIntoView({ behavior: 'smooth' })}
+                    className="hover:text-[var(--color-gold)] transition-colors">{item.label}</button>
+                </li>
+              ))}
             </ul>
           </div>
           <div>
-            <h4 className="font-manrope font-semibold text-xs uppercase tracking-[0.15em] text-white/70 mb-5">Legal</h4>
-            <ul className="space-y-3 font-manrope text-sm text-white/50">
-              <li><a href="#" className="hover:text-white transition-colors">Términos y Condiciones</a></li>
-              <li><a href="#" className="hover:text-white transition-colors">Política de Privacidad</a></li>
-              <li><a href="#" className="hover:text-white transition-colors">Política de Devoluciones</a></li>
+            <h4 className="font-inter text-[11px] uppercase tracking-[0.18em] text-white/70 mb-6">Legal</h4>
+            <ul className="space-y-3 font-inter text-sm text-white/30">
+              {['Privacidad', 'Términos', 'Devoluciones'].map(item => (
+                <li key={item}>
+                  <a href="#" className="hover:text-[var(--color-gold)] transition-colors">{item}</a>
+                </li>
+              ))}
             </ul>
           </div>
         </div>
-
-        <div className="py-6 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <p className="font-manrope text-xs text-white/30">&copy; {new Date().getFullYear()} Dais Store. Todos los derechos reservados.</p>
-          <Link to="/admin/login" className="font-manrope text-xs text-white/20 hover:text-white/50 transition-colors">
-            Admin
-          </Link>
+        <div className="py-8 border-t border-white/5 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <p className="font-inter text-[11px] text-white/20">&copy; {new Date().getFullYear()} DAIS. Todos los derechos reservados.</p>
+          <div className="flex items-center gap-6">
+            <Link to="/admin/login" className="font-inter text-[11px] text-white/20 hover:text-white/50 transition-colors">Admin</Link>
+            <span className="font-inter text-[11px] text-white/20">Diseñado con elegancia</span>
+          </div>
         </div>
       </div>
     </footer>

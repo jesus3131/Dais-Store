@@ -72,3 +72,14 @@ INSERT INTO site_settings (key, value) VALUES
 ('address', 'Montería, Córdoba, Colombia'),
 ('business_hours', 'Lun - Sáb: 8:00 AM - 6:00 PM')
 ON CONFLICT (key) DO NOTHING;
+
+-- Default design settings (admin-editable)
+INSERT INTO site_settings (key, value) VALUES
+('site_logo_url', ''),
+('site_logo_alt', 'Logo'),
+('hero_bg_image_url', ''),
+('hero_bg_image_alt', 'Hero'),
+('about_image_url', ''),
+('about_image_alt', 'Historia')
+ON CONFLICT (key) DO NOTHING;
+
