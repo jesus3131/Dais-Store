@@ -128,6 +128,16 @@ function EntryModal({ open, onClose, onSave, edit }) {
   );
 }
 
+function ChartEmptyState({ message }) {
+  return (
+    <div className="flex flex-col items-center justify-center h-[260px] text-center">
+      <span className="material-symbols-outlined text-4xl text-[var(--color-warm-gray)] mb-3">bar_chart</span>
+      <p className="font-inter text-sm text-[var(--color-on-surface-variant)]">{message || 'Sin datos para mostrar'}</p>
+      <p className="font-inter text-xs text-[var(--color-warm-gray-dark)] mt-1">Agrega movimientos contables para ver gráficos</p>
+    </div>
+  );
+}
+
 function CustomTooltip({ active, payload, label, format }) {
   if (!active || !payload?.length) return null;
   return (
@@ -157,7 +167,7 @@ export default function AdminAccounting() {
   const [filterType, setFilterType] = useState('');
   const [filterCategory, setFilterCategory] = useState('');
   const [filterStatus, setFilterStatus] = useState('');
-  const [filterDateFrom, setFilterDateFrom] = useState(() => { const d = new Date(); d.setMonth(d.getMonth() - 1); return d.toISOString().slice(0, 10); });
+  const [filterDateFrom, setFilterDateFrom] = useState(() => { const d = new Date(); d.setFullYear(d.getFullYear() - 1); return d.toISOString().slice(0, 10); });
   const [filterDateTo, setFilterDateTo] = useState(() => new Date().toISOString().slice(0, 10));
   const [taxYear, setTaxYear] = useState(new Date().getFullYear());
 
@@ -172,7 +182,7 @@ export default function AdminAccounting() {
       if (filterStatus) filters.status = filterStatus;
 
       const [entriesData, summaryData, taxSummary] = await Promise.all([
-        api.getAccountingEntries(filters).catch(() => []),
+        api.getAccountingEntries(Object.keys(filters).length ? filters : undefined).catch(() => []),
         api.getAccountingSummary({ from: filterDateFrom, to: filterDateTo }).catch(() => null),
         api.getTaxSummary(taxYear).catch(() => []),
       ]);
@@ -220,7 +230,6 @@ export default function AdminAccounting() {
 
   const totalIncome = profitLossData.reduce((s, r) => s + r.income, 0);
   const totalExpenses = profitLossData.reduce((s, r) => s + r.expense, 0);
-  const totalNet = totalIncome - totalExpenses;
 
   const exportExcel = () => {
     const wb = XLSX.utils.book_new();
@@ -228,7 +237,7 @@ export default function AdminAccounting() {
     XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet([
       { Concepto: 'Ingresos Totales', Valor: totalIncome },
       { Concepto: 'Gastos Totales', Valor: totalExpenses },
-      { Concepto: 'Utilidad Neta', Valor: totalNet },
+      { Concepto: 'Utilidad Neta', Valor: totalIncome - totalExpenses },
       { Concepto: 'Ingresos Pendientes', Valor: Number(summary?.pending_income || 0) },
       { Concepto: 'Gastos Pendientes', Valor: Number(summary?.pending_expenses || 0) },
     ]), 'Resumen');
@@ -275,6 +284,9 @@ export default function AdminAccounting() {
     } catch { addToast('Error al eliminar'); }
   };
 
+  const expenseTotal = expenseBreakdown.reduce((s, r) => s + Number(r.total), 0);
+  const incomeTotal = incomeBreakdown.reduce((s, r) => s + Number(r.total), 0);
+
   const TABS = [
     { key: 'dashboard', label: 'Dashboard', icon: 'dashboard' },
     { key: 'income', label: 'Ingresos', icon: 'arrow_upward' },
@@ -283,9 +295,11 @@ export default function AdminAccounting() {
     { key: 'entries', label: 'Movimientos', icon: 'format_list_bulleted' },
   ];
 
-  if (loading && !entries.length) {
+  if (loading && !entries.length && !summary) {
     return <div className="flex justify-center py-20"><div className="animate-spin rounded-full h-8 w-8 border border-[var(--color-gold)] border-t-transparent" /></div>;
   }
+
+  const filterForType = (type) => entries.filter(e => e.type === type);
 
   return (
     <div>
@@ -317,7 +331,7 @@ export default function AdminAccounting() {
           <span className="font-inter text-[10px] uppercase tracking-[0.12em] text-[var(--color-on-surface-variant)]">Hasta</span>
           <input type="date" value={filterDateTo} onChange={e => setFilterDateTo(e.target.value)} className="admin-input !w-auto !py-2" />
         </div>
-        <select value={filterType} onChange={e => setFilterType(e.target.value)} className="admin-input !w-auto !py-2">
+        <select value={filterType} onChange={e => { setFilterType(e.target.value); setFilterCategory(''); }} className="admin-input !w-auto !py-2">
           <option value="">Todos</option>
           <option value="income">Ingresos</option>
           <option value="expense">Gastos</option>
@@ -371,57 +385,77 @@ export default function AdminAccounting() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <div className="bg-white border border-[var(--color-warm-gray)]/40 p-6">
               <h2 className="font-headline text-base text-[var(--color-near-black)] mb-4">Flujo de Caja</h2>
-              <ResponsiveContainer width="100%" height={260}>
-                <AreaChart data={cashFlowData} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
-                  <defs>
-                    <linearGradient id="cfG" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor={GOLD} stopOpacity={0.2} /><stop offset="95%" stopColor={GOLD} stopOpacity={0} /></linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(212,175,55,0.08)" />
-                  <XAxis dataKey="day" tick={{ fontSize: 9, fill: '#8a8a8a' }} tickFormatter={v => v?.slice(5) || ''} />
-                  <YAxis tick={{ fontSize: 9, fill: '#8a8a8a' }} tickFormatter={v => formatMoney(v)} />
-                  <Tooltip content={<CustomTooltip format={formatMoney} />} />
-                  <Area type="monotone" dataKey="balance" stroke={GOLD} fill="url(#cfG)" strokeWidth={2} />
-                </AreaChart>
-              </ResponsiveContainer>
+              {cashFlowData.length > 0 ? (
+                <ResponsiveContainer width="100%" height={260}>
+                  <AreaChart data={cashFlowData} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
+                    <defs>
+                      <linearGradient id="cfG" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor={GOLD} stopOpacity={0.2} /><stop offset="95%" stopColor={GOLD} stopOpacity={0} /></linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(212,175,55,0.08)" />
+                    <XAxis dataKey="day" tick={{ fontSize: 9, fill: '#8a8a8a' }} tickFormatter={v => v?.slice(5) || ''} />
+                    <YAxis tick={{ fontSize: 9, fill: '#8a8a8a' }} tickFormatter={v => formatMoney(v)} />
+                    <Tooltip content={<CustomTooltip format={formatMoney} />} />
+                    <Area type="monotone" dataKey="balance" stroke={GOLD} fill="url(#cfG)" strokeWidth={2} />
+                  </AreaChart>
+                </ResponsiveContainer>
+              ) : <ChartEmptyState message="No hay flujo de caja disponible" />}
             </div>
             <div className="bg-white border border-[var(--color-warm-gray)]/40 p-6">
               <h2 className="font-headline text-base text-[var(--color-near-black)] mb-4">Ingresos vs Gastos</h2>
-              <ResponsiveContainer width="100%" height={260}>
-                <BarChart data={profitLossData} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(212,175,55,0.08)" />
-                  <XAxis dataKey="category" tick={{ fontSize: 9, fill: '#8a8a8a' }} />
-                  <YAxis tick={{ fontSize: 9, fill: '#8a8a8a' }} tickFormatter={v => formatMoney(v)} />
-                  <Tooltip content={<CustomTooltip format={formatMoney} />} />
-                  <Bar dataKey="income" name="Ingresos" fill="#22c55e" radius={[3, 3, 0, 0]} />
-                  <Bar dataKey="expense" name="Gastos" fill="#ef4444" radius={[3, 3, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
+              {profitLossData.length > 0 ? (
+                <ResponsiveContainer width="100%" height={260}>
+                  <BarChart data={profitLossData} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(212,175,55,0.08)" />
+                    <XAxis dataKey="category" tick={{ fontSize: 9, fill: '#8a8a8a' }} />
+                    <YAxis tick={{ fontSize: 9, fill: '#8a8a8a' }} tickFormatter={v => formatMoney(v)} />
+                    <Tooltip content={<CustomTooltip format={formatMoney} />} />
+                    <Bar dataKey="income" name="Ingresos" fill="#22c55e" radius={[3, 3, 0, 0]} />
+                    <Bar dataKey="expense" name="Gastos" fill="#ef4444" radius={[3, 3, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              ) : <ChartEmptyState message="No hay datos de ingresos/gastos" />}
             </div>
             <div className="bg-white border border-[var(--color-warm-gray)]/40 p-6">
               <h2 className="font-headline text-base text-[var(--color-near-black)] mb-4">Gastos por Categoría</h2>
-              <ResponsiveContainer width="100%" height={260}>
-                <PieChart>
-                  <Pie data={expenseBreakdown} dataKey="total" nameKey="category" cx="50%" cy="50%" outerRadius={90} innerRadius={50}>
-                    {expenseBreakdown.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
-                  </Pie>
-                  <Tooltip content={<CustomTooltip format={formatMoney} />} />
-                  <Legend wrapperStyle={{ fontSize: '10px', fontFamily: 'Inter' }} />
-                </PieChart>
-              </ResponsiveContainer>
+              {expenseBreakdown.length > 0 ? (
+                <ResponsiveContainer width="100%" height={260}>
+                  <PieChart>
+                    <Pie data={expenseBreakdown} dataKey="total" nameKey="category" cx="50%" cy="50%" outerRadius={90} innerRadius={50}>
+                      {expenseBreakdown.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
+                    </Pie>
+                    <Tooltip content={<CustomTooltip format={formatMoney} />} />
+                    <Legend wrapperStyle={{ fontSize: '10px', fontFamily: 'Inter' }} />
+                  </PieChart>
+                </ResponsiveContainer>
+              ) : <ChartEmptyState message="No hay gastos registrados" />}
             </div>
             <div className="bg-white border border-[var(--color-warm-gray)]/40 p-6">
               <h2 className="font-headline text-base text-[var(--color-near-black)] mb-4">Ingresos por Categoría</h2>
-              <ResponsiveContainer width="100%" height={260}>
-                <PieChart>
-                  <Pie data={incomeBreakdown} dataKey="total" nameKey="category" cx="50%" cy="50%" outerRadius={90} innerRadius={50}>
-                    {incomeBreakdown.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
-                  </Pie>
-                  <Tooltip content={<CustomTooltip format={formatMoney} />} />
-                  <Legend wrapperStyle={{ fontSize: '10px', fontFamily: 'Inter' }} />
-                </PieChart>
-              </ResponsiveContainer>
+              {incomeBreakdown.length > 0 ? (
+                <ResponsiveContainer width="100%" height={260}>
+                  <PieChart>
+                    <Pie data={incomeBreakdown} dataKey="total" nameKey="category" cx="50%" cy="50%" outerRadius={90} innerRadius={50}>
+                      {incomeBreakdown.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
+                    </Pie>
+                    <Tooltip content={<CustomTooltip format={formatMoney} />} />
+                    <Legend wrapperStyle={{ fontSize: '10px', fontFamily: 'Inter' }} />
+                  </PieChart>
+                </ResponsiveContainer>
+              ) : <ChartEmptyState message="No hay ingresos registrados" />}
             </div>
           </div>
+
+          {entries.length === 0 && (
+            <div className="bg-white border border-[var(--color-warm-gray)]/40 p-12 text-center">
+              <span className="material-symbols-outlined text-5xl text-[var(--color-warm-gray)] mb-4">account_balance</span>
+              <h3 className="font-headline text-xl text-[var(--color-near-black)] mb-2">Empieza a registrar tus movimientos</h3>
+              <p className="font-inter text-sm text-[var(--color-on-surface-variant)] max-w-md mx-auto mb-6">Agrega ingresos y gastos para ver gráficos financieros, flujo de caja y reportes fiscales.</p>
+              <button onClick={() => { setEditEntry(null); setModalOpen(true); }} className="btn-gold">
+                <span className="material-symbols-outlined text-[16px]">add</span>
+                Agregar primera entrada
+              </button>
+            </div>
+          )}
         </div>
       )}
 
@@ -444,7 +478,7 @@ export default function AdminAccounting() {
                 </thead>
                 <tbody>
                   {(tab === 'income' ? incomeBreakdown : expenseBreakdown).map(row => {
-                    const total = (tab === 'income' ? incomeBreakdown : expenseBreakdown).reduce((s, r) => s + Number(r.total), 0);
+                    const total = tab === 'income' ? incomeTotal : expenseTotal;
                     const pct = total > 0 ? (Number(row.total) / total * 100).toFixed(1) : 0;
                     return (
                       <tr key={row.category} className="border-b border-[var(--color-warm-gray)]/20 hover:bg-[var(--color-ivory)]/50 transition-colors">
@@ -456,7 +490,7 @@ export default function AdminAccounting() {
                     );
                   })}
                   {(tab === 'income' ? incomeBreakdown : expenseBreakdown).length === 0 && (
-                    <tr><td colSpan={4} className="p-16 text-center font-inter text-sm text-[var(--color-on-surface-variant)]">Sin datos</td></tr>
+                    <tr><td colSpan={4} className="p-16 text-center font-inter text-sm text-[var(--color-on-surface-variant)]">Sin datos en este período</td></tr>
                   )}
                 </tbody>
               </table>
@@ -478,7 +512,7 @@ export default function AdminAccounting() {
                   </tr>
                 </thead>
                 <tbody>
-                  {entries.filter(e => e.type === tab.slice(0, -1)).slice(0, 20).map(e => (
+                  {(tab === 'income' ? filterForType('income') : filterForType('expense')).slice(0, 20).map(e => (
                     <tr key={e.id} className="border-b border-[var(--color-warm-gray)]/20 hover:bg-[var(--color-ivory)]/50 transition-colors">
                       <td className="p-4 font-inter text-sm">{e.entry_date?.slice(0, 10)}</td>
                       <td className="p-4 font-inter text-sm">{e.category}</td>
@@ -489,7 +523,7 @@ export default function AdminAccounting() {
                       </td>
                     </tr>
                   ))}
-                  {entries.filter(e => e.type === tab.slice(0, -1)).length === 0 && (
+                  {(tab === 'income' ? filterForType('income') : filterForType('expense')).length === 0 && (
                     <tr><td colSpan={5} className="p-16 text-center font-inter text-sm text-[var(--color-on-surface-variant)]">Sin registros</td></tr>
                   )}
                 </tbody>
@@ -503,7 +537,7 @@ export default function AdminAccounting() {
       {tab === 'tax' && (
         <div className="space-y-6">
           <div className="flex items-center gap-4">
-            <span className="font-inter text-[10px] uppercase tracking-[0.12em] text-[var(--color-on-surface-variant)]">Año</span>
+            <span className="font-inter text-[10px] uppercase tracking-[0.12em] text-[var(--color-on-surface-variant)]">Año fiscal</span>
             <select value={taxYear} onChange={e => setTaxYear(Number(e.target.value))} className="admin-input !w-auto !py-2">
               {[2024, 2025, 2026, 2027].map(y => <option key={y} value={y}>{y}</option>)}
             </select>
@@ -546,7 +580,7 @@ export default function AdminAccounting() {
                       <td className="p-5 text-right font-headline text-sm font-semibold text-amber-600">{formatMoney(Number(t.income) - Number(t.deductible_expenses))}</td>
                     </tr>
                   ))}
-                  {taxData.length === 0 && <tr><td colSpan={5} className="p-16 text-center font-inter text-sm text-[var(--color-on-surface-variant)]">Sin datos fiscales</td></tr>}
+                  {taxData.length === 0 && <tr><td colSpan={5} className="p-16 text-center font-inter text-sm text-[var(--color-on-surface-variant)]">Sin datos fiscales para {taxYear}</td></tr>}
                 </tbody>
               </table>
             </div>
