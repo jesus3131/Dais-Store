@@ -7,11 +7,13 @@ import MobileMenu from './MobileMenu.jsx';
 export default function Header() {
   const { totalItems, toggleCart } = useCart();
   const [siteName, setSiteName] = useState('DAIS');
+  const [siteLogo, setSiteLogo] = useState(null);
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
 
   useEffect(() => {
     api.getSettings().then((s) => {
+      if (s?.site_logo_url) setSiteLogo(s.site_logo_url);
       if (s?.site_name) setSiteName(s.site_name);
       else if (s?.site_logo_alt) setSiteName(s.site_logo_alt);
     }).catch(() => {});
@@ -46,8 +48,12 @@ export default function Header() {
               </button>
             ))}
           </div>
-          <div className="absolute left-1/2 -translate-x-1/2 cursor-pointer" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
-            <span className="font-display text-2xl lg:text-3xl italic text-[var(--color-gold)] tracking-wide">{siteName}</span>
+          <div className="absolute left-1/2 -translate-x-1/2 cursor-pointer flex items-center justify-center" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
+            {siteLogo ? (
+              <img src={siteLogo} alt={siteName} className="h-10 lg:h-12 w-auto object-contain" />
+            ) : (
+              <span className="font-display text-2xl lg:text-3xl italic text-[var(--color-gold)] tracking-wide">{siteName}</span>
+            )}
           </div>
           <div className="flex items-center gap-2">
             <button className="hidden lg:flex p-3 hover:bg-[var(--color-gold-soft)] rounded-full transition-colors" aria-label="Buscar">

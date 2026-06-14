@@ -10,6 +10,7 @@ import inventoryRouter from './routes/inventory.js';
 import ordersRouter from './routes/orders.js';
 import messagesRouter from './routes/messages.js';
 import catalogsRouter from './routes/catalogs.js';
+import accountingRouter from './routes/accounting.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -27,6 +28,7 @@ app.use('/api/inventory', inventoryRouter);
 app.use('/api/orders', ordersRouter);
 app.use('/api/messages', messagesRouter);
 app.use('/api/catalogs', catalogsRouter);
+app.use('/api/accounting', accountingRouter);
 
 app.get('/api/health', (_req, res) => {
   res.json({ status: 'ok' });

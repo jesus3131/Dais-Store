@@ -50,6 +50,14 @@ export const api = {
   },
   deleteCatalog: (id) => request(`/catalogs/${id}`, { method: 'DELETE' }),
 
+  // Accounting
+  getAccountingEntries: (filters) => request(`/accounting${filters ? '?' + new URLSearchParams(filters).toString() : ''}`),
+  getAccountingSummary: (filters) => request(`/accounting/summary${filters ? '?' + new URLSearchParams(filters).toString() : ''}`),
+  getTaxSummary: (year) => request(`/accounting/tax-summary${year ? `?year=${year}` : ''}`),
+  createAccountingEntry: (data) => request('/accounting', { method: 'POST', body: JSON.stringify(data) }),
+  updateAccountingEntry: (id, data) => request(`/accounting/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+  deleteAccountingEntry: (id) => request(`/accounting/${id}`, { method: 'DELETE' }),
+
   // Inventory
   getInventory: () => request('/inventory'),
   getLowStock: () => request('/inventory/low-stock'),
