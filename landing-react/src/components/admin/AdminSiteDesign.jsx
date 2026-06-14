@@ -89,7 +89,7 @@ export default function AdminSiteDesign() {
     if (!el || !el.files?.[0] || !uploadTarget) return;
     const file = el.files[0];
     const formData = new FormData();
-    formData.append('image', file);
+    formData.append('file', file);
     const kind = uploadTarget;
     try {
       setUploadsBusy(b => ({ ...b, [kind]: true }));
@@ -136,10 +136,6 @@ export default function AdminSiteDesign() {
       preview: settings.about_image_url,
     },
   ], [settings]);
-
-  useEffect(() => {
-    if (fileInputRef.current && uploadTarget) handleUpload();
-  }, [settings]); // trigger when file input changes indirectly
 
   const handleFileChange = () => {
     if (fileInputRef.current?.files?.[0] && uploadTarget) {
