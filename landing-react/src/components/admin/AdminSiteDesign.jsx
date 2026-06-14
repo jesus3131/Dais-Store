@@ -89,11 +89,11 @@ export default function AdminSiteDesign() {
     if (!el || !el.files?.[0] || !uploadTarget) return;
     const file = el.files[0];
     const formData = new FormData();
-    formData.append('file', file);
+    formData.append('image', file);
     const kind = uploadTarget;
     try {
       setUploadsBusy(b => ({ ...b, [kind]: true }));
-      const res = await api.uploadCatalog(formData);
+      const res = await api.uploadImage(formData);
       setKey(kind === 'logo' ? 'site_logo_url' : kind === 'hero' ? 'hero_bg_image_url' : 'about_image_url', res.url);
       addToast('Imagen subida correctamente');
     } catch { addToast('Error subiendo la imagen'); }

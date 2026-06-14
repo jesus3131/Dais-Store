@@ -41,6 +41,13 @@ export const api = {
   getSettings: () => request('/settings'),
   updateSetting: (key, value) => request(`/settings/${key}`, { method: 'PUT', body: JSON.stringify({ value }) }),
 
+  // Upload
+  uploadImage: async (formData) => {
+    const res = await fetch(`${API_BASE}/upload`, { method: 'POST', body: formData });
+    if (!res.ok) throw new Error((await res.json()).error || 'Upload failed');
+    return res.json();
+  },
+
   // Catalogs
   getCatalogs: () => request('/catalogs'),
   uploadCatalog: async (formData) => {
