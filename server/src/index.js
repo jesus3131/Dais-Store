@@ -11,6 +11,10 @@ import ordersRouter from './routes/orders.js';
 import messagesRouter from './routes/messages.js';
 import catalogsRouter from './routes/catalogs.js';
 import accountingRouter from './routes/accounting.js';
+import masterDataRouter from './routes/masterData.js';
+import accountingCoreRouter from './routes/accountingCore.js';
+import inventoryMovementRouter from './routes/inventoryMovement.js';
+import financialReportRouter from './routes/financialReport.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -29,6 +33,10 @@ app.use('/api/orders', ordersRouter);
 app.use('/api/messages', messagesRouter);
 app.use('/api/catalogs', catalogsRouter);
 app.use('/api/accounting', accountingRouter);
+app.use('/api', masterDataRouter);
+app.use('/api', accountingCoreRouter);
+app.use('/api/inventory-movements', inventoryMovementRouter);
+app.use('/api/financial-reports', financialReportRouter);
 
 app.get('/api/health', (_req, res) => {
   res.json({ status: 'ok' });

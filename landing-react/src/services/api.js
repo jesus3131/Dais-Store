@@ -70,4 +70,38 @@ export const api = {
   getLowStock: () => request('/inventory/low-stock'),
   updateStock: (productId, quantity) => request(`/inventory/${productId}/stock`, { method: 'PUT', body: JSON.stringify({ quantity }) }),
   updateMinStock: (productId, minStock) => request(`/inventory/${productId}/min-stock`, { method: 'PUT', body: JSON.stringify({ min_stock: minStock }) }),
+  getInventoryMovements: (productId) => request(`/inventory-movements?product_id=${productId}`),
+  createInventoryMovement: (data) => request('/inventory-movements', { method: 'POST', body: JSON.stringify(data) }),
+
+  // Accounting System - Master Data
+  getAccountCharts: () => request('/account-charts'),
+  createAccountChart: (data) => request('/account-charts', { method: 'POST', body: JSON.stringify(data) }),
+  updateAccountChart: (id, data) => request(`/account-charts/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+  getThirdParties: (filters) => request(`/third-parties${filters ? '?' + new URLSearchParams(filters).toString() : ''}`),
+  getThirdParty: (id) => request(`/third-parties/${id}`),
+  createThirdParty: (data) => request('/third-parties', { method: 'POST', body: JSON.stringify(data) }),
+  updateThirdParty: (id, data) => request(`/third-parties/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+  getCostCenters: () => request('/cost-centers'),
+  createCostCenter: (data) => request('/cost-centers', { method: 'POST', body: JSON.stringify(data) }),
+  getBankAccounts: () => request('/bank-accounts'),
+  createBankAccount: (data) => request('/bank-accounts', { method: 'POST', body: JSON.stringify(data) }),
+
+  // Accounting System - Core
+  getJournalEntries: (filters) => request(`/journal-entries${filters ? '?' + new URLSearchParams(filters).toString() : ''}`),
+  getJournalEntry: (id) => request(`/journal-entries/${id}`),
+  createJournalEntry: (data) => request('/journal-entries', { method: 'POST', body: JSON.stringify(data) }),
+  updateJournalEntryStatus: (id, status) => request(`/journal-entries/${id}/status`, { method: 'PUT', body: JSON.stringify({ status }) }),
+  getInvoices: (filters) => request(`/invoices${filters ? '?' + new URLSearchParams(filters).toString() : ''}`),
+  getInvoice: (id) => request(`/invoices/${id}`),
+  createInvoice: (data) => request('/invoices', { method: 'POST', body: JSON.stringify(data) }),
+  updateInvoiceStatus: (id, status) => request(`/invoices/${id}/status`, { method: 'PUT', body: JSON.stringify({ status }) }),
+  getReceivablePayable: (filters) => request(`/receivable-payable${filters ? '?' + new URLSearchParams(filters).toString() : ''}`),
+  createReceivablePayable: (data) => request('/receivable-payable', { method: 'POST', body: JSON.stringify(data) }),
+  getBankReconciliation: (bankAccountId) => request(`/bank-reconciliation?bank_account_id=${bankAccountId}`),
+  createBankReconciliation: (data) => request('/bank-reconciliation', { method: 'POST', body: JSON.stringify(data) }),
+
+  // Financial Reports
+  getTrialBalance: (from, to) => request(`/financial-reports/trial-balance?from=${from}&to=${to}`),
+  getIncomeStatement: (from, to) => request(`/financial-reports/income-statement?from=${from}&to=${to}`),
+  getBalanceSheet: (asOf) => request(`/financial-reports/balance-sheet?as_of=${asOf}`),
 };
