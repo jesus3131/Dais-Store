@@ -13,6 +13,7 @@ import FAQ from '../components/sections/FAQ.jsx';
 import Newsletter from '../components/sections/Newsletter.jsx';
 import PreFooter from '../components/sections/PreFooter.jsx';
 import Footer from '../components/layout/Footer.jsx';
+import FloatingSaleNotification from '../components/ui/FloatingSaleNotification.jsx';
 import useScrollReveal from '../hooks/useScrollReveal.js';
 
 export default function LandingPage() {
@@ -36,6 +37,7 @@ export default function LandingPage() {
       </main>
       <Footer />
       <CartDrawer />
+      <FloatingSaleNotification />
       <BackToTop />
     </>
   );

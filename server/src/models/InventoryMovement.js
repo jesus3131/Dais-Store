@@ -18,7 +18,7 @@ export async function createMovement(data) {
   const qty = parseInt(data.quantity);
   const newQty = data.movement_type === 'in' ? prev + qty
     : data.movement_type === 'out' ? Math.max(0, prev - qty)
-    : data.movement_type === 'adjustment' ? qty
+    : data.movement_type === 'adjustment' ? prev + qty
     : prev;
 
   await pool.query(

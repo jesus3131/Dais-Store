@@ -2,6 +2,7 @@ import { useState, useRef } from 'react';
 import * as XLSX from 'xlsx';
 import { api } from '../../services/api.js';
 import { useToast } from '../../context/ToastContext.jsx';
+import { triggerFloatingNotification } from '../ui/FloatingSaleNotification.jsx';
 
 export default function AdminImport() {
   const fileRef = useRef(null);
@@ -30,6 +31,7 @@ export default function AdminImport() {
       const data = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]);
       const result = await api.importProducts(data);
       addToast(`${result.count || data.length} productos importados`);
+      triggerFloatingNotification({ name: 'Importación', product: `${result.count || data.length} productos`, icon: 'upload_file', time: 'recién' });
       setPreview([]);
       if (fileRef.current) fileRef.current.value = '';
     } catch (e) { addToast('Error al importar: ' + (e.message || e), 'error'); }

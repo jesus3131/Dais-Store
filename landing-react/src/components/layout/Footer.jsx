@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { api } from '../../services/api.js';
 import { Link } from 'react-router-dom';
+import SocialIcon, { SOCIAL_LINKS } from '../ui/SocialIcons.jsx';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -29,14 +30,10 @@ export default function Footer() {
               Distribuidora mayorista de productos de belleza premium. Calidad excepcional para tu negocio.
             </p>
             <div className="flex gap-4 mt-6">
-              {[
-                { icon: 'instagram', label: 'Instagram' },
-                { icon: 'facebook', label: 'Facebook' },
-                { icon: 'music_note', label: 'TikTok' },
-                { icon: 'chat', label: 'WhatsApp' },
-              ].map(s => (
-                <a key={s.label} href="#" className="w-10 h-10 rounded-full border border-white/10 flex items-center justify-center hover:border-[var(--color-gold)] hover:bg-[var(--color-gold)]/10 transition-all group" aria-label={s.label}>
-                  <span className="material-symbols-outlined text-white/50 text-[16px] group-hover:text-[var(--color-gold)] transition-colors">{s.icon}</span>
+              {SOCIAL_LINKS.map(s => (
+                <a key={s.key} href={s.href} target="_blank" rel="noopener noreferrer"
+                  className="w-10 h-10 rounded-full border border-white/10 flex items-center justify-center hover:border-[var(--color-gold)] hover:bg-[var(--color-gold)]/10 transition-all group" aria-label={s.label}>
+                  <SocialIcon icon={s.key} size={16} className="text-white/50 group-hover:text-[var(--color-gold)] transition-colors" />
                 </a>
               ))}
             </div>

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { NavLink, useNavigate, Link } from 'react-router-dom';
+import { NavLink, useNavigate, Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext.jsx';
 import { api } from '../../services/api.js';
 
@@ -20,6 +20,7 @@ const links = [
 export default function AdminLayout({ children }) {
   const { logout } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [unread, setUnread] = useState(0);
 
   useEffect(() => {
@@ -69,7 +70,7 @@ export default function AdminLayout({ children }) {
         </div>
       </aside>
       <main className="flex-1 overflow-y-auto">
-        <div className="max-w-7xl mx-auto p-8">{children}</div>
+        <div key={location.pathname} className="max-w-7xl mx-auto p-8 animate-page-enter">{children}</div>
       </main>
     </div>
   );

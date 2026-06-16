@@ -1,11 +1,14 @@
 import { useState, useEffect, useRef } from 'react';
 import { api } from '../../services/api.js';
+import { useToast } from '../../context/ToastContext.jsx';
+import { triggerFloatingNotification } from '../ui/FloatingSaleNotification.jsx';
 
 export default function AdminCatalogs() {
   const [catalogs, setCatalogs] = useState([]);
   const fileRef = useRef(null);
   const [title, setTitle] = useState('');
   const [uploading, setUploading] = useState(false);
+  const { addToast } = useToast();
 
   const load = () => { api.getCatalogs().then(setCatalogs).catch(() => {}); };
   useEffect(load, []);
@@ -14,14 +17,15 @@ export default function AdminCatalogs() {
     if (!title || !fileRef.current?.files[0]) return;
     setUploading(true);
     const fd = new FormData(); fd.append('title', title); fd.append('file', fileRef.current.files[0]);
-    try { await api.uploadCatalog(fd); setTitle(''); fileRef.current.value = ''; load(); }
-    catch (e) { alert('Error al subir: ' + e.message); }
+    try { await api.uploadCatalog(fd); setTitle(''); fileRef.current.value = ''; addToast('Catálogo subido'); triggerFloatingNotification({ name: 'Nuevo catálogo', product: title, icon: 'description', time: 'recién' }); load(); }
+    catch { addToast('Error al subir catálogo', 'error'); }
     setUploading(false);
   };
 
   const handleDelete = async (id) => {
     if (!window.confirm('¿Eliminar este catálogo?')) return;
-    await api.deleteCatalog(id); load();
+    try { await api.deleteCatalog(id); addToast('Catálogo eliminado', 'info'); load(); }
+    catch { addToast('Error al eliminar catálogo', 'error'); }
   };
 
   return (

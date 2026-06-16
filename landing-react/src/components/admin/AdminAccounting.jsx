@@ -1,6 +1,7 @@
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { api } from '../../services/api.js';
 import { useToast } from '../../context/ToastContext.jsx';
+import { triggerFloatingNotification } from '../ui/FloatingSaleNotification.jsx';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, AreaChart, Area, CartesianGrid } from 'recharts';
 
 const GOLD = '#d4af37';
@@ -95,15 +96,17 @@ function Modal({ open, onClose, title, wide, children }) {
 }
 
 function AccountModal({ open, onClose, onSave, edit }) {
-  const [form, setForm] = useState({ code: '', name: '', type: 'income', level: 1, status: 'active' });
+  const [form, setForm] = useState({ code: '', name: '', type: 'income', level: 1, is_active: true });
   const [saving, setSaving] = useState(false);
+  const codeRef = useRef();
 
   useEffect(() => {
     if (edit) {
-      setForm({ code: edit.code, name: edit.name, type: edit.type, level: edit.level, status: edit.status || 'active' });
+      setForm({ code: edit.code, name: edit.name, type: edit.type, level: edit.level, is_active: edit.is_active ?? true });
     } else {
-      setForm({ code: '', name: '', type: 'income', level: 1, status: 'active' });
+      setForm({ code: '', name: '', type: 'income', level: 1, is_active: true });
     }
+    if (open) setTimeout(() => codeRef.current?.focus(), 100);
   }, [edit, open]);
 
   const handleSubmit = async (e) => {
@@ -118,17 +121,21 @@ function AccountModal({ open, onClose, onSave, edit }) {
       }
       onSave();
       onClose();
-    } catch { /* ignore */ }
+    } catch (err) { addToast(err.message || 'Error al guardar cuenta', 'error'); }
     finally { setSaving(false); }
+  };
+
+  const handleKeyDown = (e) => {
+    if (e.key === 'Escape') onClose();
   };
 
   return (
     <Modal open={open} onClose={onClose} title={edit ? 'Editar cuenta' : 'Nueva cuenta'}>
-      <form onSubmit={handleSubmit} className="space-y-5">
+      <form onSubmit={handleSubmit} onKeyDown={handleKeyDown} className="space-y-5">
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="admin-label">Código</label>
-            <input value={form.code} onChange={e => setForm(f => ({ ...f, code: e.target.value }))} className="admin-input" placeholder="Ej: 1105" required />
+            <label className="admin-label">Código <span className="text-red-400">*</span></label>
+            <input ref={codeRef} value={form.code} onChange={e => setForm(f => ({ ...f, code: e.target.value }))} className="admin-input" placeholder="Ej: 1105" required autoComplete="off" />
           </div>
           <div>
             <label className="admin-label">Nivel</label>
@@ -138,8 +145,8 @@ function AccountModal({ open, onClose, onSave, edit }) {
           </div>
         </div>
         <div>
-          <label className="admin-label">Nombre</label>
-          <input value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} className="admin-input" placeholder="Nombre de la cuenta" required />
+          <label className="admin-label">Nombre <span className="text-red-400">*</span></label>
+          <input value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} className="admin-input" placeholder="Ej: Caja General" required />
         </div>
         <div className="grid grid-cols-2 gap-4">
           <div>
@@ -150,7 +157,7 @@ function AccountModal({ open, onClose, onSave, edit }) {
           </div>
           <div>
             <label className="admin-label">Estado</label>
-            <select value={form.status} onChange={e => setForm(f => ({ ...f, status: e.target.value }))} className="admin-input">
+            <select value={form.is_active ? 'active' : 'inactive'} onChange={e => setForm(f => ({ ...f, is_active: e.target.value === 'active' }))} className="admin-input">
               <option value="active">Activo</option>
               <option value="inactive">Inactivo</option>
             </select>
@@ -168,24 +175,26 @@ function AccountModal({ open, onClose, onSave, edit }) {
 }
 
 function ThirdPartyModal({ open, onClose, onSave, edit }) {
-  const [form, setForm] = useState({ document: '', name: '', type: 'client', email: '', phone: '', city: '', address: '', status: 'active' });
+  const [form, setForm] = useState({ document_type: 'NIT', document_number: '', name: '', type: 'client', email: '', phone: '', city: '', address: '', is_active: true });
   const [saving, setSaving] = useState(false);
+  const docRef = useRef();
 
   useEffect(() => {
     if (edit) {
       setForm({
-        document: edit.document, name: edit.name, type: edit.type,
+        document_type: edit.document_type || 'NIT', document_number: edit.document_number, name: edit.name, type: edit.type,
         email: edit.email || '', phone: edit.phone || '', city: edit.city || '',
-        address: edit.address || '', status: edit.status || 'active',
+        address: edit.address || '', is_active: edit.is_active ?? true,
       });
     } else {
-      setForm({ document: '', name: '', type: 'client', email: '', phone: '', city: '', address: '', status: 'active' });
+      setForm({ document_type: 'NIT', document_number: '', name: '', type: 'client', email: '', phone: '', city: '', address: '', is_active: true });
     }
+    if (open) setTimeout(() => docRef.current?.focus(), 100);
   }, [edit, open]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!form.document || !form.name) return;
+    if (!form.document_number || !form.name) return;
     setSaving(true);
     try {
       if (edit) {
@@ -195,17 +204,35 @@ function ThirdPartyModal({ open, onClose, onSave, edit }) {
       }
       onSave();
       onClose();
-    } catch { /* ignore */ }
+    } catch (err) { addToast(err.message || 'Error al guardar tercero', 'error'); }
     finally { setSaving(false); }
+  };
+
+  const handleKeyDown = (e) => {
+    if (e.key === 'Escape') onClose();
   };
 
   return (
     <Modal open={open} onClose={onClose} title={edit ? 'Editar tercero' : 'Nuevo tercero'}>
-      <form onSubmit={handleSubmit} className="space-y-5">
+      <form onSubmit={handleSubmit} onKeyDown={handleKeyDown} className="space-y-5">
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="admin-label">Documento</label>
-            <input value={form.document} onChange={e => setForm(f => ({ ...f, document: e.target.value }))} className="admin-input" required />
+            <label className="admin-label">Tipo Doc. <span className="text-red-400">*</span></label>
+            <select value={form.document_type} onChange={e => setForm(f => ({ ...f, document_type: e.target.value }))} className="admin-input">
+              <option value="NIT">NIT</option>
+              <option value="CC">CC</option>
+              <option value="CE">CE</option>
+            </select>
+          </div>
+          <div>
+            <label className="admin-label">No. Documento <span className="text-red-400">*</span></label>
+            <input ref={docRef} value={form.document_number} onChange={e => setForm(f => ({ ...f, document_number: e.target.value }))} className="admin-input" placeholder="Ej: 900123456-7" required autoComplete="off" />
+          </div>
+        </div>
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="admin-label">Nombre / Razón Social <span className="text-red-400">*</span></label>
+            <input value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} className="admin-input" placeholder="Ej: María Fernanda López" required autoComplete="name" />
           </div>
           <div>
             <label className="admin-label">Tipo</label>
@@ -214,28 +241,24 @@ function ThirdPartyModal({ open, onClose, onSave, edit }) {
             </select>
           </div>
         </div>
-        <div>
-          <label className="admin-label">Nombre / Razón Social</label>
-          <input value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} className="admin-input" required />
-        </div>
         <div className="grid grid-cols-2 gap-4">
           <div>
             <label className="admin-label">Email</label>
-            <input type="email" value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))} className="admin-input" />
+            <input type="email" value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))} className="admin-input" placeholder="correo@ejemplo.com" autoComplete="email" />
           </div>
           <div>
             <label className="admin-label">Teléfono</label>
-            <input value={form.phone} onChange={e => setForm(f => ({ ...f, phone: e.target.value }))} className="admin-input" />
+            <input type="tel" value={form.phone} onChange={e => setForm(f => ({ ...f, phone: e.target.value }))} className="admin-input" placeholder="Ej: 3001234567" autoComplete="tel" />
           </div>
         </div>
         <div className="grid grid-cols-2 gap-4">
           <div>
             <label className="admin-label">Ciudad</label>
-            <input value={form.city} onChange={e => setForm(f => ({ ...f, city: e.target.value }))} className="admin-input" />
+            <input value={form.city} onChange={e => setForm(f => ({ ...f, city: e.target.value }))} className="admin-input" placeholder="Ej: Bogotá" autoComplete="address-level2" />
           </div>
           <div>
             <label className="admin-label">Estado</label>
-            <select value={form.status} onChange={e => setForm(f => ({ ...f, status: e.target.value }))} className="admin-input">
+            <select value={form.is_active ? 'active' : 'inactive'} onChange={e => setForm(f => ({ ...f, is_active: e.target.value === 'active' }))} className="admin-input">
               <option value="active">Activo</option>
               <option value="inactive">Inactivo</option>
             </select>
@@ -243,7 +266,7 @@ function ThirdPartyModal({ open, onClose, onSave, edit }) {
         </div>
         <div>
           <label className="admin-label">Dirección</label>
-          <input value={form.address} onChange={e => setForm(f => ({ ...f, address: e.target.value }))} className="admin-input" />
+          <input value={form.address} onChange={e => setForm(f => ({ ...f, address: e.target.value }))} className="admin-input" placeholder="Ej: Cra 7 #80-15" autoComplete="street-address" />
         </div>
         <div className="flex justify-end gap-3 pt-2">
           <button type="button" onClick={onClose} className="admin-btn-outline">Cancelar</button>
@@ -292,7 +315,7 @@ function JournalEntryModal({ open, onClose, onSave, accounts, thirdParties }) {
         body: JSON.stringify({
           ...form,
           third_party_id: form.third_party_id ? Number(form.third_party_id) : null,
-          lines: form.lines.map(l => ({ account_id: Number(l.account_id), debit: parseFloat(l.debit) || 0, credit: parseFloat(l.credit) || 0 })),
+          lines: form.lines.map(l => ({ account_chart_id: Number(l.account_id), debit: parseFloat(l.debit) || 0, credit: parseFloat(l.credit) || 0 })),
         }),
       });
       onSave();
@@ -318,7 +341,7 @@ function JournalEntryModal({ open, onClose, onSave, accounts, thirdParties }) {
           <label className="admin-label">Tercero (opcional)</label>
           <select value={form.third_party_id} onChange={e => setForm(f => ({ ...f, third_party_id: e.target.value }))} className="admin-input">
             <option value="">Sin tercero</option>
-            {thirdParties.map(t => <option key={t.id} value={t.id}>{t.name} &mdash; {t.document}</option>)}
+            {thirdParties.map(t => <option key={t.id} value={t.id}>{t.name} &mdash; {t.document_number}</option>)}
           </select>
         </div>
         <div>
@@ -394,8 +417,8 @@ function JournalEntryModal({ open, onClose, onSave, accounts, thirdParties }) {
 
 function InvoiceModal({ open, onClose, onSave, thirdParties }) {
   const [form, setForm] = useState({
-    type: 'sales', third_party_id: '', issue_date: new Date().toISOString().slice(0, 10),
-    due_date: '', notes: '', items: [{ description: '', quantity: 1, unit_price: '', tax_rate: 0 }],
+    invoice_type: 'sales', third_party_id: '', issue_date: new Date().toISOString().slice(0, 10),
+    due_date: '', items: [{ description: '', quantity: 1, unit_price: '', tax_rate: 0 }],
   });
   const [saving, setSaving] = useState(false);
 
@@ -404,8 +427,8 @@ function InvoiceModal({ open, onClose, onSave, thirdParties }) {
       const d = new Date();
       d.setDate(d.getDate() + 30);
       setForm({
-        type: 'sales', third_party_id: '', issue_date: new Date().toISOString().slice(0, 10),
-        due_date: d.toISOString().slice(0, 10), notes: '',
+        invoice_type: 'sales', third_party_id: '', issue_date: new Date().toISOString().slice(0, 10),
+        due_date: d.toISOString().slice(0, 10),
         items: [{ description: '', quantity: 1, unit_price: '', tax_rate: 0 }],
       });
     }
@@ -447,11 +470,11 @@ function InvoiceModal({ open, onClose, onSave, thirdParties }) {
       });
       onSave();
       onClose();
-    } catch { /* ignore */ }
+    } catch (err) { addToast(err.message || 'Error al guardar factura', 'error'); }
     finally { setSaving(false); }
   };
 
-  const filteredTP = thirdParties.filter(t => t.status === 'active');
+  const filteredTP = thirdParties.filter(t => t.is_active !== false);
 
   return (
     <Modal open={open} onClose={onClose} title="Nueva factura" wide>
@@ -459,17 +482,17 @@ function InvoiceModal({ open, onClose, onSave, thirdParties }) {
         <div className="grid grid-cols-2 gap-4">
           <div>
             <label className="admin-label">Tipo</label>
-            <select value={form.type} onChange={e => setForm(f => ({ ...f, type: e.target.value }))} className="admin-input">
+            <select value={form.invoice_type} onChange={e => setForm(f => ({ ...f, invoice_type: e.target.value }))} className="admin-input">
               <option value="sales">Factura de venta</option>
               <option value="purchase">Factura de compra</option>
             </select>
           </div>
           <div>
-            <label className="admin-label">{form.type === 'sales' ? 'Cliente' : 'Proveedor'}</label>
+            <label className="admin-label">{form.invoice_type === 'sales' ? 'Cliente' : 'Proveedor'}</label>
             <select value={form.third_party_id} onChange={e => setForm(f => ({ ...f, third_party_id: e.target.value }))} className="admin-input" required>
               <option value="">Seleccionar</option>
-              {filteredTP.filter(t => form.type === 'sales' ? ['client', 'other'].includes(t.type) : ['supplier', 'other'].includes(t.type)).map(t => (
-                <option key={t.id} value={t.id}>{t.name} ({t.document})</option>
+              {filteredTP.filter(t => form.invoice_type === 'sales' ? ['client', 'other'].includes(t.type) : ['supplier', 'other'].includes(t.type)).map(t => (
+                <option key={t.id} value={t.id}>{t.name} ({t.document_number})</option>
               ))}
             </select>
           </div>
@@ -594,7 +617,7 @@ function ReconciliationModal({ open, onClose, onSave, bankAccounts }) {
       });
       onSave();
       onClose();
-    } catch { /* ignore */ }
+    } catch (err) { addToast(err.message || 'Error al guardar conciliación', 'error'); }
     finally { setSaving(false); }
   };
 
@@ -605,7 +628,7 @@ function ReconciliationModal({ open, onClose, onSave, bankAccounts }) {
           <label className="admin-label">Cuenta bancaria</label>
           <select value={form.bank_account_id} onChange={e => setForm(f => ({ ...f, bank_account_id: e.target.value }))} className="admin-input" required>
             <option value="">Seleccionar cuenta</option>
-            {bankAccounts.map(a => <option key={a.id} value={a.id}>{a.name} &mdash; {a.account_number}</option>)}
+            {bankAccounts.map(a => <option key={a.id} value={a.id}>{a.bank_name} &mdash; {a.account_number}</option>)}
           </select>
         </div>
         {selAccount && (
@@ -796,6 +819,7 @@ export default function AdminAccounting() {
     try {
       await req('/journal-entries/' + id + '/status', { method: 'PUT', body: JSON.stringify({ status }) });
       addToast(status === 'posted' ? 'Asiento contabilizado' : 'Asiento anulado');
+      triggerFloatingNotification({ name: status === 'posted' ? 'Asiento contabilizado' : 'Asiento anulado', product: `#${id}`, icon: 'account_balance', time: 'recién' });
       setJournalEntries(prev => prev.map(e => e.id === id ? { ...e, status } : e));
     } catch { addToast('Error al actualizar estado', 'error'); }
   };
@@ -805,6 +829,7 @@ export default function AdminAccounting() {
       await req('/invoices/' + id + '/status', { method: 'PUT', body: JSON.stringify({ status }) });
       const msgs = { issued: 'Factura emitida', paid: 'Factura marcada como pagada', cancelled: 'Factura anulada' };
       addToast(msgs[status] || 'Estado actualizado');
+      triggerFloatingNotification({ name: 'Factura', product: msgs[status] || status, icon: 'receipt', time: 'recién' });
       setInvoices(prev => prev.map(inv => inv.id === id ? { ...inv, status } : inv));
     } catch { addToast('Error al actualizar estado', 'error'); }
   };
@@ -814,6 +839,7 @@ export default function AdminAccounting() {
     try {
       await api.deleteAccountingEntry(id);
       addToast('Asiento eliminado');
+      triggerFloatingNotification({ name: 'Asiento', product: `#${id} eliminado`, icon: 'delete', time: '' });
       setJournalEntries(prev => prev.filter(e => e.id !== id));
     } catch { addToast('Error al eliminar', 'error'); }
   };
@@ -825,7 +851,7 @@ export default function AdminAccounting() {
       let url;
       if (reportType === 'trial-balance') url = '/financial-reports/trial-balance?from=' + reportFrom + '&to=' + reportTo;
       else if (reportType === 'income-statement') url = '/financial-reports/income-statement?from=' + reportFrom + '&to=' + reportTo;
-      else url = '/financial-reports/balance-sheet';
+      else url = '/financial-reports/balance-sheet?as_of=' + (reportTo || new Date().toISOString().slice(0, 10));
       setReportData(await req(url));
     } catch { addToast('Error al generar reporte', 'error'); }
     finally { setReportLoading(false); }
@@ -1003,7 +1029,7 @@ export default function AdminAccounting() {
                       <td className="p-5 font-headline text-sm text-[var(--color-near-black)]">{acct.name}</td>
                       <td className="p-5"><TypeBadge type={acct.type} /></td>
                       <td className="p-5 text-center font-inter text-sm">{acct.level}</td>
-                      <td className="p-5 text-center"><StatusBadge status={acct.status || 'active'} labels={{ active: 'Activo', inactive: 'Inactivo' }} /></td>
+                      <td className="p-5 text-center"><StatusBadge status={acct.is_active !== false ? 'active' : 'inactive'} labels={{ active: 'Activo', inactive: 'Inactivo' }} /></td>
                       <td className="p-5 text-right">
                         <button onClick={() => { setEditAccount(acct); setAccountModal(true); }} className="p-2 text-[var(--color-on-surface-variant)] hover:text-[var(--color-gold)] transition-colors" title="Editar">
                           <span className="material-symbols-outlined text-[18px]">edit</span>
@@ -1053,18 +1079,18 @@ export default function AdminAccounting() {
                     if (tpTypeFilter && t.type !== tpTypeFilter) return false;
                     if (tpSearch) {
                       const q = tpSearch.toLowerCase();
-                      if (!t.name?.toLowerCase().includes(q) && !t.document?.toLowerCase().includes(q)) return false;
+                      if (!t.name?.toLowerCase().includes(q) && !t.document_number?.toLowerCase().includes(q)) return false;
                     }
                     return true;
                   }).map(tp => (
                     <tr key={tp.id} className="border-b border-[var(--color-warm-gray)]/20 hover:bg-[var(--color-ivory)]/50 transition-colors">
-                      <td className="p-5 font-inter text-sm font-mono">{tp.document}</td>
+                      <td className="p-5 font-inter text-sm font-mono">{tp.document_number}</td>
                       <td className="p-5 font-headline text-sm text-[var(--color-near-black)]">{tp.name}</td>
                       <td className="p-5"><TypeBadge type={tp.type} mapping={THIRD_PARTY_TYPES} /></td>
                       <td className="p-5 font-inter text-sm text-[var(--color-on-surface-variant)]">{tp.email || '—'}</td>
                       <td className="p-5 font-inter text-sm text-[var(--color-on-surface-variant)]">{tp.phone || '—'}</td>
                       <td className="p-5 font-inter text-sm text-[var(--color-on-surface-variant)]">{tp.city || '—'}</td>
-                      <td className="p-5 text-center"><StatusBadge status={tp.status || 'active'} labels={{ active: 'Activo', inactive: 'Inactivo' }} /></td>
+                      <td className="p-5 text-center"><StatusBadge status={tp.is_active !== false ? 'active' : 'inactive'} labels={{ active: 'Activo', inactive: 'Inactivo' }} /></td>
                       <td className="p-5 text-right">
                         <button onClick={() => { setEditTp(tp); setTpModal(true); }} className="p-2 text-[var(--color-on-surface-variant)] hover:text-[var(--color-gold)] transition-colors" title="Editar">
                           <span className="material-symbols-outlined text-[18px]">edit</span>
@@ -1180,8 +1206,8 @@ export default function AdminAccounting() {
                       <td className="p-5 font-inter text-sm font-mono">{inv.invoice_number || 'INV-' + String(inv.id).padStart(5, '0')}</td>
                       <td className="p-5">
                         <span className={'inline-flex items-center gap-1 font-inter text-xs ' + (inv.type === 'sales' ? 'text-blue-600' : 'text-orange-600')}>
-                          <span className="material-symbols-outlined text-[14px]">{inv.type === 'sales' ? 'shopping_cart' : 'inventory'}</span>
-                          {inv.type === 'sales' ? 'Venta' : 'Compra'}
+                          <span className="material-symbols-outlined text-[14px]">{inv.invoice_type === 'sales' ? 'shopping_cart' : 'inventory'}</span>
+                          {inv.invoice_type === 'sales' ? 'Venta' : 'Compra'}
                         </span>
                       </td>
                       <td className="p-5 font-headline text-sm text-[var(--color-near-black)]">{inv.third_party?.name || tpCache[inv.third_party_id]?.name || '—'}</td>
@@ -1284,7 +1310,7 @@ export default function AdminAccounting() {
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
               {bankAccounts.slice(0, 4).map(ba => (
                 <div key={ba.id} className="bg-white border border-[var(--color-warm-gray)]/40 p-5">
-                  <p className="font-inter text-[9px] uppercase tracking-[0.12em] text-[var(--color-on-surface-variant)] mb-1">{ba.name}</p>
+                  <p className="font-inter text-[9px] uppercase tracking-[0.12em] text-[var(--color-on-surface-variant)] mb-1">{ba.bank_name}</p>
                   <p className="font-inter text-xs text-[var(--color-on-surface-variant)] mb-2">{ba.account_number || '—'}</p>
                   <p className="font-headline text-lg text-[var(--color-near-black)]">{formatMoney(ba.balance || 0)}</p>
                 </div>
@@ -1356,17 +1382,15 @@ export default function AdminAccounting() {
                   <option value="balance-sheet">Balance General</option>
                 </select>
               </div>
+              <div>
+                <label className="admin-label">{reportType === 'balance-sheet' ? 'Corte al' : 'Desde'}</label>
+                <input type="date" value={reportType === 'balance-sheet' ? reportTo : reportFrom} onChange={e => { reportType === 'balance-sheet' ? setReportTo(e.target.value) : setReportFrom(e.target.value); }} className="admin-input !w-auto" />
+              </div>
               {reportType !== 'balance-sheet' && (
-                <>
-                  <div>
-                    <label className="admin-label">Desde</label>
-                    <input type="date" value={reportFrom} onChange={e => setReportFrom(e.target.value)} className="admin-input !w-auto" />
-                  </div>
-                  <div>
-                    <label className="admin-label">Hasta</label>
-                    <input type="date" value={reportTo} onChange={e => setReportTo(e.target.value)} className="admin-input !w-auto" />
-                  </div>
-                </>
+                <div>
+                  <label className="admin-label">Hasta</label>
+                  <input type="date" value={reportTo} onChange={e => setReportTo(e.target.value)} className="admin-input !w-auto" />
+                </div>
               )}
               <button onClick={loadReport} disabled={reportLoading} className="inline-flex items-center gap-2 px-6 py-3 bg-[var(--color-near-black)] text-white font-inter text-xs uppercase tracking-[0.18em] hover:bg-[var(--color-gold)] hover:text-[var(--color-near-black)] transition-all duration-300">
                 <span className="material-symbols-outlined text-[16px]">description</span>
@@ -1387,98 +1411,116 @@ export default function AdminAccounting() {
                 <h2 className="font-headline text-base text-[var(--color-near-black)]">
                   {reportType === 'trial-balance' ? 'Balance de Comprobación' : reportType === 'income-statement' ? 'Estado de Resultados' : 'Balance General'}
                 </h2>
-                {reportType !== 'balance-sheet' && (
-                  <p className="font-inter text-xs text-[var(--color-on-surface-variant)] mt-1">{reportFrom} &mdash; {reportTo}</p>
-                )}
+                <p className="font-inter text-xs text-[var(--color-on-surface-variant)] mt-1">{reportFrom} &mdash; {reportTo}</p>
               </div>
               <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead>
-                    <tr className="border-b border-[var(--color-warm-gray)]/40">
-                      <th className="text-left p-5 font-inter text-[10px] uppercase tracking-[0.15em] text-[var(--color-on-surface-variant)] font-medium bg-[var(--color-ivory)]">Cuenta</th>
-                      <th className="text-left p-5 font-inter text-[10px] uppercase tracking-[0.15em] text-[var(--color-on-surface-variant)] font-medium bg-[var(--color-ivory)]">Nombre</th>
-                      {reportType === 'trial-balance' && (
-                        <>
-                          <th className="text-right p-5 font-inter text-[10px] uppercase tracking-[0.15em] text-[var(--color-on-surface-variant)] font-medium bg-[var(--color-ivory)]">Débitos</th>
-                          <th className="text-right p-5 font-inter text-[10px] uppercase tracking-[0.15em] text-[var(--color-on-surface-variant)] font-medium bg-[var(--color-ivory)]">Créditos</th>
-                        </>
-                      )}
-                      {reportType === 'income-statement' && (
-                        <th className="text-right p-5 font-inter text-[10px] uppercase tracking-[0.15em] text-[var(--color-on-surface-variant)] font-medium bg-[var(--color-ivory)]">Saldo</th>
-                      )}
-                      {reportType === 'balance-sheet' && (
-                        <>
-                          <th className="text-right p-5 font-inter text-[10px] uppercase tracking-[0.15em] text-[var(--color-on-surface-variant)] font-medium bg-[var(--color-ivory)]">Activo</th>
-                          <th className="text-right p-5 font-inter text-[10px] uppercase tracking-[0.15em] text-[var(--color-on-surface-variant)] font-medium bg-[var(--color-ivory)]">Pasivo</th>
-                          <th className="text-right p-5 font-inter text-[10px] uppercase tracking-[0.15em] text-[var(--color-on-surface-variant)] font-medium bg-[var(--color-ivory)]">Patrimonio</th>
-                        </>
-                      )}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {Array.isArray(reportData) ? reportData.map((row, i) => (
-                      <tr key={i} className="border-b border-[var(--color-warm-gray)]/20 hover:bg-[var(--color-ivory)]/50 transition-colors">
-                        <td className="p-5 font-inter text-sm font-mono text-[var(--color-on-surface-variant)]">{row.code || row.cuenta || '—'}</td>
-                        <td className="p-5 font-headline text-sm text-[var(--color-near-black)]">{row.name || row.nombre || '—'}</td>
+                {reportType === 'balance-sheet' && !Array.isArray(reportData) ? (
+                  <div className="divide-y divide-[var(--color-warm-gray)]/20">
+                    {[{ key: 'assets', label: 'Activo', color: 'text-blue-600' },
+                      { key: 'liabilities', label: 'Pasivo', color: 'text-purple-600' },
+                      { key: 'equity', label: 'Patrimonio', color: 'text-emerald-600' }].map(section => (
+                      <div key={section.key}>
+                        <div className="p-5 bg-[var(--color-ivory)] border-b border-[var(--color-warm-gray)]/40">
+                          <h3 className={'font-headline text-sm font-semibold ' + section.color}>{section.label}</h3>
+                        </div>
+                        <table className="w-full">
+                          <tbody>
+                            {reportData[section.key]?.map((row, i) => (
+                              <tr key={i} className="border-b border-[var(--color-warm-gray)]/20 hover:bg-[var(--color-ivory)]/50 transition-colors">
+                                <td className="p-5 font-inter text-sm font-mono text-[var(--color-on-surface-variant)] w-[120px]">{row.code}</td>
+                                <td className="p-5 font-headline text-sm text-[var(--color-near-black)]">{row.name}</td>
+                                <td className={'p-5 text-right font-headline text-sm font-semibold ' + section.color}>{formatMoney(row.balance || 0)}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    ))}
+                    <div className="p-5 bg-[var(--color-ivory)] flex justify-between font-headline text-sm font-bold text-[var(--color-near-black)]">
+                      <span>Total Activos</span>
+                      <span className="text-blue-600">{formatMoney(reportData.totalAssets || 0)}</span>
+                      <span>Total Pasivo + Patrimonio</span>
+                      <span className="text-purple-600">{formatMoney(reportData.totalLiabilitiesEquity || 0)}</span>
+                    </div>
+                  </div>
+                ) : Array.isArray(reportData) ? (
+                  <table className="w-full">
+                    <thead>
+                      <tr className="border-b border-[var(--color-warm-gray)]/40">
+                        <th className="text-left p-5 font-inter text-[10px] uppercase tracking-[0.15em] text-[var(--color-on-surface-variant)] font-medium bg-[var(--color-ivory)]">Cuenta</th>
+                        <th className="text-left p-5 font-inter text-[10px] uppercase tracking-[0.15em] text-[var(--color-on-surface-variant)] font-medium bg-[var(--color-ivory)]">Nombre</th>
                         {reportType === 'trial-balance' && (
                           <>
-                            <td className="p-5 text-right font-headline text-sm font-semibold text-[var(--color-near-black)]">{formatMoney(row.debit || row.debitos || 0)}</td>
-                            <td className="p-5 text-right font-headline text-sm font-semibold text-[var(--color-near-black)]">{formatMoney(row.credit || row.creditos || 0)}</td>
+                            <th className="text-right p-5 font-inter text-[10px] uppercase tracking-[0.15em] text-[var(--color-on-surface-variant)] font-medium bg-[var(--color-ivory)]">Débitos</th>
+                            <th className="text-right p-5 font-inter text-[10px] uppercase tracking-[0.15em] text-[var(--color-on-surface-variant)] font-medium bg-[var(--color-ivory)]">Créditos</th>
                           </>
                         )}
                         {reportType === 'income-statement' && (
-                          <td className={'p-5 text-right font-headline text-sm font-semibold ' + (Number(row.balance || row.saldo || 0) >= 0 ? 'text-green-600' : 'text-red-500')}>{formatMoney(row.balance || row.saldo || 0)}</td>
-                        )}
-                        {reportType === 'balance-sheet' && (
-                          <>
-                            <td className="p-5 text-right font-headline text-sm font-semibold text-blue-600">{formatMoney(row.asset || row.activo || 0)}</td>
-                            <td className="p-5 text-right font-headline text-sm font-semibold text-purple-600">{formatMoney(row.liability || row.pasivo || 0)}</td>
-                            <td className="p-5 text-right font-headline text-sm font-semibold text-emerald-600">{formatMoney(row.equity || row.patrimonio || 0)}</td>
-                          </>
+                          <th className="text-right p-5 font-inter text-[10px] uppercase tracking-[0.15em] text-[var(--color-on-surface-variant)] font-medium bg-[var(--color-ivory)]">Saldo</th>
                         )}
                       </tr>
-                    )) : (
-                      <tr>
-                        <td colSpan={reportType === 'trial-balance' ? 4 : reportType === 'income-statement' ? 3 : 5} className="p-10 text-center font-inter text-sm text-[var(--color-on-surface-variant)]">
-                          Datos del reporte no disponibles
-                        </td>
-                      </tr>
-                    )}
-                  </tbody>
-                  {Array.isArray(reportData) && reportData.length > 0 && (
-                    <tfoot>
-                      <tr className="border-t border-[var(--color-warm-gray)]/40 bg-[var(--color-ivory)]">
-                        <td colSpan={2} className="p-5 text-right font-headline text-sm font-bold text-[var(--color-near-black)]">Totales</td>
-                        {reportType === 'trial-balance' && (
-                          <>
-                            <td className="p-5 text-right font-headline text-sm font-bold text-[var(--color-near-black)]">
-                              {formatMoney(reportData.reduce((s, r) => s + Number(r.debit || r.debitos || 0), 0))}
-                            </td>
-                            <td className="p-5 text-right font-headline text-sm font-bold text-[var(--color-near-black)]">
-                              {formatMoney(reportData.reduce((s, r) => s + Number(r.credit || r.creditos || 0), 0))}
-                            </td>
-                          </>
-                        )}
-                        {reportType === 'income-statement' && (
+                    </thead>
+                    <tbody>
+                      {reportData.map((row, i) => (
+                        <tr key={i} className="border-b border-[var(--color-warm-gray)]/20 hover:bg-[var(--color-ivory)]/50 transition-colors">
+                          <td className="p-5 font-inter text-sm font-mono text-[var(--color-on-surface-variant)]">{row.code || '—'}</td>
+                          <td className="p-5 font-headline text-sm text-[var(--color-near-black)]">{row.name || '—'}</td>
+                          {reportType === 'trial-balance' && (
+                            <>
+                              <td className="p-5 text-right font-headline text-sm font-semibold text-[var(--color-near-black)]">{formatMoney(row.total_debit || 0)}</td>
+                              <td className="p-5 text-right font-headline text-sm font-semibold text-[var(--color-near-black)]">{formatMoney(row.total_credit || 0)}</td>
+                            </>
+                          )}
+                          {reportType === 'income-statement' && (
+                            <td className={'p-5 text-right font-headline text-sm font-semibold ' + (Number(row.balance || 0) >= 0 ? 'text-green-600' : 'text-red-500')}>{formatMoney(row.balance || 0)}</td>
+                          )}
+                        </tr>
+                      ))}
+                    </tbody>
+                    {reportData.length > 0 && reportType === 'trial-balance' && (
+                      <tfoot>
+                        <tr className="border-t border-[var(--color-warm-gray)]/40 bg-[var(--color-ivory)]">
+                          <td colSpan={2} className="p-5 text-right font-headline text-sm font-bold text-[var(--color-near-black)]">Totales</td>
                           <td className="p-5 text-right font-headline text-sm font-bold text-[var(--color-near-black)]">
-                            {formatMoney(reportData.reduce((s, r) => s + Number(r.balance || r.saldo || 0), 0))}
+                            {formatMoney(reportData.reduce((s, r) => s + Number(r.total_debit || 0), 0))}
                           </td>
-                        )}
-                      </tr>
-                    </tfoot>
-                  )}
-                </table>
+                          <td className="p-5 text-right font-headline text-sm font-bold text-[var(--color-near-black)]">
+                            {formatMoney(reportData.reduce((s, r) => s + Number(r.total_credit || 0), 0))}
+                          </td>
+                        </tr>
+                      </tfoot>
+                    )}
+                    {reportData.length > 0 && reportType === 'income-statement' && (
+                      <tfoot>
+                        <tr className="border-t border-[var(--color-warm-gray)]/40 bg-[var(--color-ivory)]">
+                          <td colSpan={2} className="p-5 text-right font-headline text-sm font-bold text-[var(--color-near-black)]">Total Ingresos</td>
+                          <td className="p-5 text-right font-headline text-sm font-bold text-green-600">{formatMoney(reportData.totalIncome || 0)}</td>
+                        </tr>
+                        <tr className="border-t border-[var(--color-warm-gray)]/20 bg-[var(--color-ivory)]/50">
+                          <td colSpan={2} className="p-5 text-right font-headline text-sm font-bold text-[var(--color-near-black)]">Total Gastos</td>
+                          <td className="p-5 text-right font-headline text-sm font-bold text-red-500">{formatMoney(reportData.totalExpenses || 0)}</td>
+                        </tr>
+                        <tr className="bg-[var(--color-near-black)] text-white">
+                          <td colSpan={2} className="p-5 text-right font-headline text-sm font-bold">Utilidad Neta</td>
+                          <td className="p-5 text-right font-headline text-sm font-bold">{formatMoney(reportData.netIncome || 0)}</td>
+                        </tr>
+                      </tfoot>
+                    )}
+                  </table>
+                ) : (
+                  <p className="p-10 text-center font-inter text-sm text-[var(--color-on-surface-variant)]">Datos del reporte no disponibles</p>
+                )}
               </div>
             </div>
           )}
         </div>
       )}
 
-      <AccountModal open={accountModal} onClose={() => { setAccountModal(false); setEditAccount(null); }} onSave={() => { addToast(editAccount ? 'Cuenta actualizada' : 'Cuenta creada'); loadTabData('chart-of-accounts'); }} edit={editAccount} />
-      <ThirdPartyModal open={tpModal} onClose={() => { setTpModal(false); setEditTp(null); }} onSave={() => { addToast(editTp ? 'Tercero actualizado' : 'Tercero creado'); loadTabData('third-parties'); }} edit={editTp} />
-      <JournalEntryModal open={entryModal} onClose={() => setEntryModal(false)} onSave={() => { addToast('Asiento creado como borrador'); loadTabData('journal-entries'); }} accounts={accounts} thirdParties={thirdParties} />
-      <InvoiceModal open={invoiceModal} onClose={() => setInvoiceModal(false)} onSave={() => { addToast('Factura creada como borrador'); loadTabData('invoicing'); }} thirdParties={thirdParties} />
-      <ReconciliationModal open={reconModal} onClose={() => setReconModal(false)} onSave={() => { addToast('Conciliación creada'); loadTabData('bank-reconciliation'); }} bankAccounts={bankAccounts} />
+      <AccountModal open={accountModal} onClose={() => { setAccountModal(false); setEditAccount(null); }} onSave={() => { addToast(editAccount ? 'Cuenta actualizada' : 'Cuenta creada'); triggerFloatingNotification({ name: 'Cuenta', product: editAccount ? 'actualizada' : 'creada', icon: 'account_tree', time: 'recién' }); loadTabData('chart-of-accounts'); }} edit={editAccount} />
+      <ThirdPartyModal open={tpModal} onClose={() => { setTpModal(false); setEditTp(null); }} onSave={() => { addToast(editTp ? 'Tercero actualizado' : 'Tercero creado'); triggerFloatingNotification({ name: 'Tercero', product: editTp ? 'actualizado' : 'creado', icon: 'people', time: 'recién' }); loadTabData('third-parties'); }} edit={editTp} />
+      <JournalEntryModal open={entryModal} onClose={() => setEntryModal(false)} onSave={() => { addToast('Asiento creado como borrador'); triggerFloatingNotification({ name: 'Asiento', product: 'borrador creado', icon: 'account_balance', time: 'recién' }); loadTabData('journal-entries'); }} accounts={accounts} thirdParties={thirdParties} />
+      <InvoiceModal open={invoiceModal} onClose={() => setInvoiceModal(false)} onSave={() => { addToast('Factura creada como borrador'); triggerFloatingNotification({ name: 'Factura', product: 'borrador creado', icon: 'receipt', time: 'recién' }); loadTabData('invoicing'); }} thirdParties={thirdParties} />
+      <ReconciliationModal open={reconModal} onClose={() => setReconModal(false)} onSave={() => { addToast('Conciliación creada'); triggerFloatingNotification({ name: 'Conciliación', product: 'registrada', icon: 'account_balance', time: 'recién' }); loadTabData('bank-reconciliation'); }} bankAccounts={bankAccounts} />
     </div>
   );
 }

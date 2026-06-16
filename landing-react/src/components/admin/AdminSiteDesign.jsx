@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { api } from '../../services/api.js';
 import { useToast } from '../../context/ToastContext.jsx';
+import { triggerFloatingNotification } from '../ui/FloatingSaleNotification.jsx';
 
 const DEFAULT_KEYS = ['site_logo_url', 'site_logo_alt', 'hero_bg_image_url', 'hero_bg_image_alt', 'about_image_url', 'about_image_alt'];
 
@@ -80,6 +81,7 @@ export default function AdminSiteDesign() {
     try {
       for (const k of DEFAULT_KEYS) await api.updateSetting(k, settings[k] ?? '');
       addToast('Diseño del sitio guardado correctamente');
+      triggerFloatingNotification({ name: 'Diseño sitio', product: 'cambios guardados', icon: 'palette', time: 'recién' });
     } catch { addToast('Error al guardar diseño'); }
     finally { setSaving(false); }
   };
@@ -96,6 +98,7 @@ export default function AdminSiteDesign() {
       const res = await api.uploadImage(formData);
       setKey(kind === 'logo' ? 'site_logo_url' : kind === 'hero' ? 'hero_bg_image_url' : 'about_image_url', res.url);
       addToast('Imagen subida correctamente');
+      triggerFloatingNotification({ name: 'Imagen subida', product: kind, icon: 'image', time: 'recién' });
     } catch { addToast('Error subiendo la imagen'); }
     finally {
       setUploadsBusy(b => ({ ...b, [kind]: false }));

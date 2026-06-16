@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo, Fragment } from 'react';
 import { api } from '../../services/api.js';
 import { useToast } from '../../context/ToastContext.jsx';
+import { triggerFloatingNotification } from '../ui/FloatingSaleNotification.jsx';
 
 function formatMoney(n) {
   return '$' + Number(n).toLocaleString('es-CO', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
@@ -19,18 +20,15 @@ function AdjustModal({ product, open, onClose, onSave }) {
     if (!form.quantity) return;
     setSaving(true);
     try {
-      const newQty = Number(product.quantity) + Number(form.quantity);
-      await api.updateStock(product.product_id, newQty);
-      if (form.reason.trim()) {
-        await api.createInventoryMovement({
-          product_id: product.product_id,
-          quantity: Number(form.quantity),
-          reason: form.reason.trim(),
-        });
-      }
+      await api.createInventoryMovement({
+        product_id: product.product_id,
+        movement_type: 'adjustment',
+        quantity: Number(form.quantity),
+        notes: form.reason.trim(),
+      });
       onSave();
       onClose();
-    } catch { /* ignore */ }
+    } catch (err) { addToast(err?.message || 'Error al ajustar stock', 'error'); }
     finally { setSaving(false); }
   };
 
@@ -145,6 +143,7 @@ export default function AdminInventory() {
       await api.updateMinStock(productId, parseInt(editForm.min_stock) || 0);
       setEditing(null);
       addToast('Stock actualizado');
+      triggerFloatingNotification({ name: 'Inventario', product: editForm.productName || 'producto', icon: 'shelf_auto', time: 'recién' });
       loadInventory();
     } catch { addToast('Error al actualizar stock'); }
   };
@@ -152,6 +151,7 @@ export default function AdminInventory() {
   const handleAdjustSave = () => {
     setAdjustProduct(null);
     addToast('Ajuste de stock registrado');
+    triggerFloatingNotification({ name: 'Ajuste inventario', product: adjustProduct?.name || '', icon: 'shelf_auto', time: 'recién' });
     loadInventory();
   };
 
@@ -353,8 +353,8 @@ export default function AdminInventory() {
                                           <td className={`py-3 pr-4 text-right font-headline text-xs font-semibold ${qty >= 0 ? 'text-green-600' : 'text-red-500'}`}>
                                             {qty >= 0 ? '+' : ''}{m.quantity}
                                           </td>
-                                          <td className="py-3 pr-4 text-right font-inter text-xs">{m.resulting_stock ?? '—'}</td>
-                                          <td className="py-3 pl-4 font-inter text-xs text-[var(--color-on-surface-variant)]">{m.reason || '—'}</td>
+                                          <td className="py-3 pr-4 text-right font-inter text-xs">{m.new_stock ?? '—'}</td>
+                                          <td className="py-3 pl-4 font-inter text-xs text-[var(--color-on-surface-variant)]">{m.notes || '—'}</td>
                                         </tr>
                                       );
                                     })}

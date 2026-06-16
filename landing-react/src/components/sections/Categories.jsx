@@ -10,7 +10,7 @@ const categories = [
 export default function Categories() {
   return (
     <section id="categories" className="py-12 lg:py-16 bg-[var(--color-surface-container)] relative overflow-hidden">
-      <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(ellipse_at_50%_0%,rgba(212,175,55,0.06)_0%,transparent_70%)]" aria-hidden="true" />
+      <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(ellipse_at_50%_0%,rgba(242,198,222,0.06)_0%,transparent_70%)]" aria-hidden="true" />
       <div className="max-w-[var(--spacing-container-max)] mx-auto px-[var(--spacing-margin-mobile)] lg:px-[var(--spacing-margin-desktop)] relative">
         <div className="text-center mb-8">
           <span className="font-inter text-[10px] uppercase tracking-[0.2em] text-[var(--color-gold)] font-medium">Categorías</span>

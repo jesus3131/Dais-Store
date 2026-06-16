@@ -1,3 +1,5 @@
+import SocialIcon, { SOCIAL_LINKS } from '../ui/SocialIcons.jsx';
+
 export default function PreFooter() {
   return (
     <section className="py-20 lg:py-28 bg-white border-t border-[var(--color-warm-gray)]/40">
@@ -6,9 +8,17 @@ export default function PreFooter() {
           <div className="text-center lg:text-left">
             <h2 className="font-display text-5xl italic text-[var(--color-gold)] mb-4">DAIS</h2>
             <p className="font-inter text-sm text-[var(--color-on-surface-variant)] max-w-md leading-relaxed">
-              Distribuidora mayorista de productos de belleza premium. 
+              Distribuidora mayorista de productos de belleza premium.
               Calidad excepcional para tu negocio en toda Colombia.
             </p>
+            <div className="flex items-center justify-center lg:justify-start gap-3 mt-8">
+              {SOCIAL_LINKS.map(s => (
+                <a key={s.key} href={s.href} target="_blank" rel="noopener noreferrer" aria-label={s.label} title={s.label}
+                  className="social-icon-gold">
+                  <SocialIcon icon={s.key} size={16} />
+                </a>
+              ))}
+            </div>
           </div>
           <div className="flex flex-col gap-5 font-inter text-sm text-[var(--color-on-surface-variant)]">
             <div className="flex items-center gap-4">

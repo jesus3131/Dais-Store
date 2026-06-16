@@ -1,6 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { api } from '../../services/api.js';
 import { useToast } from '../../context/ToastContext.jsx';
+import { triggerFloatingNotification } from '../ui/FloatingSaleNotification.jsx';
 
 export default function AdminMessages() {
   const [messages, setMessages] = useState([]);
@@ -8,28 +9,39 @@ export default function AdminMessages() {
   const [replyText, setReplyText] = useState('');
   const [sending, setSending] = useState(false);
   const { addToast } = useToast();
+  const replyRef = useRef();
 
   const load = () => { api.getMessages().then(setMessages).catch(() => {}); };
   useEffect(load, []);
 
   const toggleRead = async (msg) => {
-    if (msg.is_read) { await api.markUnread(msg.id); } else { await api.markRead(msg.id); }
-    load();
+    try {
+      if (msg.is_read) { await api.markUnread(msg.id); } else { await api.markRead(msg.id); }
+      load();
+    } catch (err) { addToast(err.message || 'Error al cambiar estado', 'error'); }
   };
 
   const handleDelete = async (id) => {
     if (!window.confirm('¿Eliminar este mensaje?')) return;
-    await api.deleteMessage(id); addToast('Mensaje eliminado', 'info'); load();
+    try {
+      await api.deleteMessage(id); addToast('Mensaje eliminado', 'info'); load();
+    } catch (err) { addToast(err.message || 'Error al eliminar', 'error'); }
   };
 
-  const openReply = (msg) => { setReplyModal(msg); setReplyText(msg.reply || ''); };
+  const openReply = (msg) => { setReplyModal(msg); setReplyText(msg.reply || ''); setTimeout(() => replyRef.current?.focus(), 100); };
 
-  const handleSendReply = async () => {
+  const handleSendReply = async (e) => {
+    if (e) e.preventDefault();
     if (!replyText.trim()) { addToast('Escribe una respuesta', 'error'); return; }
     setSending(true);
-    try { await api.replyMessage(replyModal.id, replyText.trim()); addToast('Respuesta guardada'); setReplyModal(null); load(); }
-    catch { addToast('Error al guardar respuesta', 'error'); }
+    try { await api.replyMessage(replyModal.id, replyText.trim()); addToast('Respuesta guardada'); triggerFloatingNotification({ name: 'Mensaje respondido', product: replyModal.name, icon: 'mail', time: 'recién' }); setReplyModal(null); load(); }
+    catch (err) { addToast(err.message || 'Error al guardar respuesta', 'error'); }
     finally { setSending(false); }
+  };
+
+  const handleKeyDown = (e) => {
+    if (e.key === 'Escape') setReplyModal(null);
+    if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') handleSendReply(e);
   };
 
   return (
@@ -67,7 +79,7 @@ export default function AdminMessages() {
                   )}
                 </div>
                 <div className="flex gap-1 flex-shrink-0">
-                  <button onClick={() => openReply(msg)} className="p-2.5 text-[var(--color-on-surface-variant)] hover:text-[var(--color-gold)] hover:bg-[var(--color-gold)]/5 transition-colors" title="Responder">
+                  <button onClick={() => openReply(msg)} className="p-2.5 text-[var(--color-on-surface-variant)] hover:text-[var(--color-gold)] hover:bg-[var(--color-gold)]/5 transition-colors" title="Respondir">
                     <span className="material-symbols-outlined text-[20px]">reply</span>
                   </button>
                   <button onClick={() => toggleRead(msg)} className="p-2.5 text-[var(--color-on-surface-variant)] hover:text-blue-500 hover:bg-blue-50 transition-colors" title={msg.is_read ? 'Marcar no leído' : 'Marcar leído'}>
@@ -91,29 +103,34 @@ export default function AdminMessages() {
 
       {replyModal && (
         <div className="fixed inset-0 bg-[var(--color-near-black)]/50 flex items-center justify-center z-50 backdrop-blur-sm" onClick={() => setReplyModal(null)}>
-          <div className="bg-white w-full max-w-xl mx-4 animate-scale-in" onClick={e => e.stopPropagation()}>
-            <div className="p-8 border-b border-[var(--color-warm-gray)]/40 flex items-center justify-between">
-              <div>
-                <h2 className="font-headline text-xl text-[var(--color-near-black)]">Responder a {replyModal.name}</h2>
-                <p className="font-inter text-xs text-[var(--color-on-surface-variant)] mt-1">{replyModal.email} {replyModal.phone ? `· ${replyModal.phone}` : ''}</p>
+          <div className="bg-white w-full max-w-xl mx-4 animate-scale-in" onClick={e => e.stopPropagation()} onKeyDown={handleKeyDown}>
+            <form onSubmit={handleSendReply}>
+              <div className="p-8 border-b border-[var(--color-warm-gray)]/40 flex items-center justify-between">
+                <div>
+                  <h2 className="font-headline text-xl text-[var(--color-near-black)]">Responder a {replyModal.name}</h2>
+                  <p className="font-inter text-xs text-[var(--color-on-surface-variant)] mt-1">{replyModal.email} {replyModal.phone ? `· ${replyModal.phone}` : ''}</p>
+                </div>
+                <button type="button" onClick={() => setReplyModal(null)} className="w-8 h-8 flex items-center justify-center hover:bg-[var(--color-warm-gray)]/30 transition-colors">
+                  <span className="material-symbols-outlined text-[18px]">close</span>
+                </button>
               </div>
-              <button onClick={() => setReplyModal(null)} className="w-8 h-8 flex items-center justify-center hover:bg-[var(--color-warm-gray)]/30 transition-colors">
-                <span className="material-symbols-outlined text-[18px]">close</span>
-              </button>
-            </div>
-            <div className="p-8">
-              <div className="mb-5 p-5 bg-[var(--color-ivory)] font-inter text-sm text-[var(--color-on-surface)] leading-relaxed">{replyModal.message}</div>
-              <label className="font-inter text-[10px] uppercase tracking-[0.15em] text-[var(--color-on-surface-variant)] font-medium mb-2 block">Tu respuesta</label>
-              <textarea value={replyText} onChange={e => setReplyText(e.target.value)} placeholder="Escribe tu respuesta..." rows={5}
-                className="w-full px-4 py-3 border border-[var(--color-warm-gray)] font-inter text-sm focus:outline-none focus:border-[var(--color-gold)] focus:ring-1 focus:ring-[var(--color-gold)]/30 transition-all resize-none" autoFocus />
-            </div>
-            <div className="p-8 border-t border-[var(--color-warm-gray)]/40 flex justify-end gap-4">
-              <button onClick={() => setReplyModal(null)} className="px-6 py-3 border border-[var(--color-warm-gray)] text-[var(--color-on-surface-variant)] font-inter text-xs uppercase tracking-[0.15em] hover:border-[var(--color-near-black)] transition-all">Cancelar</button>
-              <button onClick={handleSendReply} disabled={sending || !replyText.trim()}
-                className="px-6 py-3 bg-[var(--color-near-black)] text-white font-inter text-xs uppercase tracking-[0.15em] hover:bg-[var(--color-gold)] hover:text-[var(--color-near-black)] transition-all disabled:opacity-50 flex items-center gap-2">
-                {sending ? 'Enviando...' : 'Enviar Respuesta'}
-              </button>
-            </div>
+              <div className="p-8">
+                <div className="mb-5 p-5 bg-[var(--color-ivory)] font-inter text-sm text-[var(--color-on-surface)] leading-relaxed">{replyModal.message}</div>
+                <label className="font-inter text-[10px] uppercase tracking-[0.15em] text-[var(--color-on-surface-variant)] font-medium mb-2 block">Tu respuesta <span className="text-red-400">*</span></label>
+                <textarea ref={replyRef} value={replyText} onChange={e => setReplyText(e.target.value)} placeholder="Escribe tu respuesta..." rows={5} maxLength={2000}
+                  className="w-full px-4 py-3 border border-[var(--color-warm-gray)] font-inter text-sm focus:outline-none focus:border-[var(--color-gold)] focus:ring-1 focus:ring-[var(--color-gold)]/30 transition-all resize-none" required />
+              </div>
+              <div className="p-8 border-t border-[var(--color-warm-gray)]/40 flex items-center justify-between">
+                <p className="font-inter text-[10px] text-[var(--color-on-surface-variant)]">Ctrl+Enter para enviar</p>
+                <div className="flex gap-4">
+                  <button type="button" onClick={() => setReplyModal(null)} className="px-6 py-3 border border-[var(--color-warm-gray)] text-[var(--color-on-surface-variant)] font-inter text-xs uppercase tracking-[0.15em] hover:border-[var(--color-near-black)] transition-all">Cancelar</button>
+                  <button type="submit" disabled={sending || !replyText.trim()}
+                    className="px-6 py-3 bg-[var(--color-near-black)] text-white font-inter text-xs uppercase tracking-[0.15em] hover:bg-[var(--color-gold)] hover:text-[var(--color-near-black)] transition-all disabled:opacity-50 flex items-center gap-2">
+                    {sending ? 'Enviando...' : 'Enviar Respuesta'}
+                  </button>
+                </div>
+              </div>
+            </form>
           </div>
         </div>
       )}

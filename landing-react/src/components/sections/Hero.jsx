@@ -13,8 +13,8 @@ export default function Hero() {
   return (
     <section id="hero" className="relative min-h-screen flex items-center overflow-hidden">
       <div className="absolute inset-0">
-        <img src={heroBg} alt="Luxury beauty" className="w-full h-full object-cover parallax" style={{ filter: 'brightness(0.45)' }} />
-        <div className="absolute inset-0 bg-gradient-to-r from-[var(--color-near-black)]/70 via-[var(--color-near-black)]/40 to-transparent" />
+        <img src={heroBg} alt="Luxury beauty" className="w-full h-full object-cover parallax" />
+        <div className="absolute inset-0 bg-gradient-to-r from-[#f2c6de]/70 via-[#f2c6de]/20 to-transparent" />
       </div>
       <div className="max-w-[var(--spacing-container-max)] mx-auto px-[var(--spacing-margin-mobile)] lg:px-[var(--spacing-margin-desktop)] relative z-20 w-full">
         <div className="max-w-2xl">

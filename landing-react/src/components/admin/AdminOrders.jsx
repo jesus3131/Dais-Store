@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { api } from '../../services/api.js';
 import { useToast } from '../../context/ToastContext.jsx';
+import { triggerFloatingNotification } from '../ui/FloatingSaleNotification.jsx';
 
 const STATUS_COLORS = {
   pending: 'border-l-amber-400 bg-amber-50/50 text-amber-700',
@@ -20,13 +21,18 @@ export default function AdminOrders() {
   useEffect(load, [filter]);
 
   const updateStatus = async (id, status) => {
-    await api.updateOrderStatus(id, status);
-    addToast(`Pedido marcado como ${STATUS_LABELS[status] || status}`); load();
+    try {
+      await api.updateOrderStatus(id, status);
+      const label = STATUS_LABELS[status] || status;
+      addToast(`Pedido marcado como ${label}`); triggerFloatingNotification({ name: 'Pedido', product: label, icon: 'local_shipping', time: 'recién' }); load();
+    } catch (err) { addToast(err.message || 'Error al actualizar estado', 'error'); }
   };
 
   const handleDelete = async (id) => {
     if (!window.confirm('¿Eliminar esta orden?')) return;
-    await api.deleteOrder(id); addToast('Pedido eliminado', 'info'); load();
+    try {
+      await api.deleteOrder(id); addToast('Pedido eliminado', 'info'); load();
+    } catch (err) { addToast(err.message || 'Error al eliminar', 'error'); }
   };
 
   return (
