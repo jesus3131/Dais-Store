@@ -1,18 +1,47 @@
 const API_BASE = '/api';
 
+let _token = sessionStorage.getItem('admin_token');
+
+export function setToken(token) { _token = token; }
+export function getToken() { return _token; }
+export function clearToken() { _token = null; }
+
 async function request(url, options = {}) {
-  const res = await fetch(`${API_BASE}${url}`, {
-    headers: { 'Content-Type': 'application/json', ...options.headers },
-    ...options,
-  });
+  const headers = { ...options.headers };
+  if (_token) headers['Authorization'] = `Bearer ${_token}`;
+  if (!(options.body instanceof FormData)) headers['Content-Type'] = 'application/json';
+
+  const res = await fetch(`${API_BASE}${url}`, { ...options, headers });
+  if (res.status === 401) {
+    clearToken();
+    sessionStorage.removeItem('admin_token');
+    sessionStorage.removeItem('admin_user');
+    window.dispatchEvent(new CustomEvent('auth:logout'));
+  }
   if (!res.ok) {
     const err = await res.json().catch(() => ({ error: res.statusText }));
     throw new Error(err.error || `HTTP ${res.status}`);
   }
-  return res.json();
+  if (res.status === 204) return null;
+  const text = await res.text();
+  return text ? JSON.parse(text) : null;
 }
 
 export const api = {
+  loginUser: (username, password) =>
+    request('/auth/login', { method: 'POST', body: JSON.stringify({ username, password }) }),
+
+  // Products — Bulk
+  importProducts: (data) => request('/products/import', { method: 'POST', body: JSON.stringify(data) }),
+  exportProducts: () => request('/products/export'),
+
+  // Categories
+  getCategories: async () => {
+    const products = await request('/products');
+    const cats = [...new Set(products.map(p => p.category).filter(Boolean))];
+    return cats.map(name => ({ name, image_url: null }));
+  },
+
   // Products
   getProducts: () => request('/products'),
   getProduct: (id) => request(`/products/${id}`),
@@ -43,7 +72,9 @@ export const api = {
 
   // Upload
   uploadImage: async (formData) => {
-    const res = await fetch(`${API_BASE}/upload`, { method: 'POST', body: formData });
+    const headers = {};
+    if (_token) headers['Authorization'] = `Bearer ${_token}`;
+    const res = await fetch(`${API_BASE}/upload`, { method: 'POST', body: formData, headers });
     if (!res.ok) throw new Error((await res.json()).error || 'Upload failed');
     return res.json();
   },
@@ -51,7 +82,9 @@ export const api = {
   // Catalogs
   getCatalogs: () => request('/catalogs'),
   uploadCatalog: async (formData) => {
-    const res = await fetch(`${API_BASE}/catalogs`, { method: 'POST', body: formData });
+    const headers = {};
+    if (_token) headers['Authorization'] = `Bearer ${_token}`;
+    const res = await fetch(`${API_BASE}/catalogs`, { method: 'POST', body: formData, headers });
     if (!res.ok) throw new Error((await res.json()).error || 'Upload failed');
     return res.json();
   },
@@ -104,4 +137,38 @@ export const api = {
   getTrialBalance: (from, to) => request(`/financial-reports/trial-balance?from=${from}&to=${to}`),
   getIncomeStatement: (from, to) => request(`/financial-reports/income-statement?from=${from}&to=${to}`),
   getBalanceSheet: (asOf) => request(`/financial-reports/balance-sheet?as_of=${asOf}`),
+
+  // Page Sections (page builder)
+  getPageSections: () => request('/page-sections'),
+  getPageSection: (id) => request(`/page-sections/${id}`),
+  createPageSection: (data) => request('/page-sections', { method: 'POST', body: JSON.stringify(data) }),
+  updatePageSection: (id, data) => request(`/page-sections/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+  deletePageSection: (id) => request(`/page-sections/${id}`, { method: 'DELETE' }),
+
+  // Design Tokens (theme colors)
+  getDesignTokens: () => request('/design-tokens'),
+  updateDesignToken: (name, value, category) => request(`/design-tokens/${name}`, { method: 'PUT', body: JSON.stringify({ value, category }) }),
+  bulkUpdateDesignTokens: (tokens) => request('/design-tokens', { method: 'PUT', body: JSON.stringify({ tokens }) }),
+
+  // Customers
+  getCustomers: () => request('/customers'),
+  getCustomer: (id) => request(`/customers/${id}`),
+  createCustomer: (data) => request('/customers', { method: 'POST', body: JSON.stringify(data) }),
+  updateCustomer: (id, data) => request(`/customers/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+  deleteCustomer: (id) => request(`/customers/${id}`, { method: 'DELETE' }),
+
+  // Coupons
+  getCoupons: () => request('/coupons'),
+  getCoupon: (id) => request(`/coupons/${id}`),
+  createCoupon: (data) => request('/coupons', { method: 'POST', body: JSON.stringify(data) }),
+  updateCoupon: (id, data) => request(`/coupons/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+  deleteCoupon: (id) => request(`/coupons/${id}`, { method: 'DELETE' }),
+  validateCoupon: (code) => request('/coupons/validate', { method: 'POST', body: JSON.stringify({ code }) }),
+
+  // Users
+  getUsers: () => request('/users'),
+  getUser: (id) => request(`/users/${id}`),
+  createUser: (data) => request('/users', { method: 'POST', body: JSON.stringify(data) }),
+  updateUser: (id, data) => request(`/users/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+  deleteUser: (id) => request(`/users/${id}`, { method: 'DELETE' }),
 };

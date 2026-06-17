@@ -1,62 +1,42 @@
-const categories = [
-  { name: 'Skincare', image: 'https://images.unsplash.com/photo-1570194065650-d99fb4ee8e39?w=800&q=80', count: '24' },
-  { name: 'Maquillaje', image: 'https://images.unsplash.com/photo-1596462502278-27bfdc403348?w=800&q=80', count: '18' },
-  { name: 'Fragancias', image: 'https://images.unsplash.com/photo-1541643600914-78b084683601?w=800&q=80', count: '12' },
-  { name: 'Accesorios', image: 'https://images.unsplash.com/photo-1604654894610-df63bc536371?w=800&q=80', count: '30' },
-  { name: 'Wellness', image: 'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=800&q=80', count: '15' },
-  { name: 'Ediciones Limitadas', image: 'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=800&q=80', count: '6' },
+
+
+const defaultCats = [
+  { name: 'Skincare', image: 'https://images.unsplash.com/photo-1570194065650-d99fb4ee8e39?w=600&q=80' },
+  { name: 'Maquillaje', image: 'https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?w=600&q=80' },
+  { name: 'Cabello', image: 'https://images.unsplash.com/photo-1526947425960-945c6e72858f?w=600&q=80' },
 ];
 
-export default function Categories() {
+export default function Categories({ sectionData = {} }) {
+  const items = (sectionData.categories || defaultCats).map(c => ({
+    ...c,
+    image_url: c.image_url || c.image,
+  }));
+
   return (
-    <section id="categories" className="py-12 lg:py-16 bg-[var(--color-surface-container)] relative overflow-hidden">
-      <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(ellipse_at_50%_0%,rgba(242,198,222,0.06)_0%,transparent_70%)]" aria-hidden="true" />
-      <div className="max-w-[var(--spacing-container-max)] mx-auto px-[var(--spacing-margin-mobile)] lg:px-[var(--spacing-margin-desktop)] relative">
-        <div className="text-center mb-8">
+    <section id="categories" className="py-20 lg:py-24 bg-[var(--color-ivory)]">
+      <div className="max-w-[var(--spacing-container-max)] mx-auto px-[var(--spacing-margin-mobile)] lg:px-[var(--spacing-margin-desktop)]">
+        <div className="text-center mb-12">
           <span className="font-inter text-[10px] uppercase tracking-[0.2em] text-[var(--color-gold)] font-medium">Categorías</span>
-          <h2 className="font-display text-[26px] lg:text-[var(--text-display-md)] text-[var(--color-near-black)] mt-1.5 leading-tight">
+          <div className="section-divider mt-4" />
+          <h2 className="font-headline text-[var(--text-display-md)] text-[var(--color-near-black)] mt-6">
             Explora por categoría
           </h2>
         </div>
-
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-3 lg:gap-5">
-          {categories.map((cat, i) => (
-            <a
-              key={i}
-              href="#catalog"
-              onClick={(e) => {
-                e.preventDefault();
-                document.getElementById('catalog')?.scrollIntoView({ behavior: 'smooth' });
-              }}
-              className={`category-card group relative block overflow-hidden ${i % 3 === 1 ? 'aspect-[5/6]' : 'aspect-[4/5]'}`}
-              style={{ animationDelay: `${i * 90}ms` }}
-            >
-              <div className="absolute inset-0 overflow-hidden">
-                <img
-                  src={cat.image}
-                  alt={cat.name}
-                  className="w-full h-full object-cover"
-                  loading="lazy"
-                />
-              </div>
-              <div className="category-overlay absolute inset-0" />
-              <div className="category-shimmer absolute inset-0 opacity-0 group-hover:opacity-100 pointer-events-none" />
-              <div className="category-frame absolute inset-0 opacity-0 group-hover:opacity-100" />
-              <div className="absolute bottom-0 left-0 right-0 p-5 z-10">
-                <div className="overflow-hidden">
-                  <h3 className="font-display text-[18px] lg:text-[24px] text-white leading-tight translate-y-0 group-hover:-translate-y-px transition-transform duration-500">
-                    {cat.name}
-                  </h3>
-                </div>
-                <div className="flex items-center gap-2 mt-1.5">
-                  <span className="block w-6 h-px bg-[var(--color-gold)] category-gold-rule" />
-                  <span className="font-inter text-[9px] uppercase tracking-[0.18em] text-[var(--color-gold)]/90">
-                    {cat.count} productos
-                  </span>
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 stagger-children">
+          {items.map((cat, idx) => (
+            <a key={idx} href="#catalog"
+              onClick={(e) => { e.preventDefault(); document.getElementById('catalog')?.scrollIntoView({ behavior: 'smooth' }); }}
+              className="group relative h-64 lg:h-80 overflow-hidden bg-[var(--color-ivory-dark)] block">
+              <img src={cat.image_url || 'https://images.unsplash.com/photo-1570194065650-d99fb4ee8e39?w=600&q=80'}
+                alt={cat.name} className="w-full h-full object-cover transition-all duration-700 group-hover:scale-105" />
+              <div className="absolute inset-0 bg-gradient-to-t from-[rgba(28,27,27,0.5)] via-transparent to-transparent" />
+              <div className="absolute bottom-0 left-0 right-0 p-6 lg:p-8">
+                <h3 className="font-headline text-xl lg:text-2xl text-white">{cat.name}</h3>
+                <div className="flex items-center gap-2 mt-2 opacity-0 group-hover:opacity-100 transition-all duration-300 -translate-y-2 group-hover:translate-y-0">
+                  <span className="font-inter text-[10px] uppercase tracking-[0.15em] text-[var(--color-gold)]">Explorar</span>
+                  <span className="material-symbols-outlined text-[14px] text-[var(--color-gold)]">arrow_forward</span>
                 </div>
               </div>
-              <div className="absolute top-0 left-0 h-px bg-[var(--color-gold)] category-border-top" />
-              <div className="absolute bottom-0 right-0 h-px bg-[var(--color-gold)] category-border-bottom" />
             </a>
           ))}
         </div>

@@ -8,10 +8,15 @@ export default function AdminMessages() {
   const [replyModal, setReplyModal] = useState(null);
   const [replyText, setReplyText] = useState('');
   const [sending, setSending] = useState(false);
+  const [loading, setLoading] = useState(true);
   const { addToast } = useToast();
   const replyRef = useRef();
 
-  const load = () => { api.getMessages().then(setMessages).catch(() => {}); };
+  const load = () => {
+    setLoading(true);
+    api.getMessages().then(setMessages).catch(() => addToast('Error al cargar mensajes', 'error'))
+    .finally(() => setLoading(false));
+  };
   useEffect(load, []);
 
   const toggleRead = async (msg) => {
@@ -46,29 +51,34 @@ export default function AdminMessages() {
 
   return (
     <div className="max-w-5xl">
-      <div className="flex items-center justify-between mb-10">
+      <div className="admin-section-header">
         <div>
           <h1 className="font-headline text-3xl text-[var(--color-near-black)]">Mensajes</h1>
           <p className="font-inter text-sm text-[var(--color-on-surface-variant)] mt-1">{messages.length} mensajes · {messages.filter(m => !m.is_read).length} sin leer</p>
         </div>
       </div>
 
+      {loading ? (
+        <div className="flex items-center justify-center py-20">
+          <div className="animate-spin w-8 h-8 border-2 border-[var(--color-warm-gray)] border-t-[var(--color-gold)] rounded-full" />
+        </div>
+      ) : (
       <div className="space-y-4">
         {messages.map(msg => (
-          <div key={msg.id} className={`bg-white border border-[var(--color-warm-gray)]/40 ${!msg.is_read ? 'border-l-[3px] border-l-[var(--color-gold)]' : ''} transition-all`}>
+          <div key={msg.id} className={`bg-white border border-[rgba(0,0,0,0.04)] ${!msg.is_read ? 'border-l-[3px] border-l-[var(--color-gold)]' : ''} transition-all`}>
             <div className="p-6">
               <div className="flex items-start justify-between gap-6">
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-3 mb-2">
                     <h3 className="font-headline text-base text-[var(--color-near-black)]">{msg.name}</h3>
                     {!msg.is_read && (
-                      <span className="px-2.5 py-1 bg-[var(--color-gold)]/10 text-[var(--color-gold)] font-inter text-[9px] uppercase tracking-[0.12em] font-medium">Nuevo</span>
+                      <span className="px-2.5 py-1 bg-[rgba(232,207,166,0.1)] text-[var(--color-gold)] font-inter text-[9px] uppercase tracking-[0.12em] font-medium rounded">Nuevo</span>
                     )}
+                    <span className="font-inter text-[10px] text-[var(--color-on-surface-variant)] ml-auto">{new Date(msg.created_at).toLocaleString('es-CO')}</span>
                   </div>
                   <p className="font-inter text-xs text-[var(--color-on-surface-variant)] mb-4">
                     <span className="material-symbols-outlined text-[12px] align-text-bottom">mail</span> {msg.email}
                     {msg.phone && <> · <span className="material-symbols-outlined text-[12px] align-text-bottom">call</span> {msg.phone}</>}
-                    {' · '}{new Date(msg.created_at).toLocaleString('es-CO')}
                   </p>
                   <p className="font-inter text-sm text-[var(--color-on-surface)] leading-relaxed">{msg.message}</p>
                   {msg.reply && (
@@ -79,13 +89,13 @@ export default function AdminMessages() {
                   )}
                 </div>
                 <div className="flex gap-1 flex-shrink-0">
-                  <button onClick={() => openReply(msg)} className="p-2.5 text-[var(--color-on-surface-variant)] hover:text-[var(--color-gold)] hover:bg-[var(--color-gold)]/5 transition-colors" title="Respondir">
+                  <button onClick={() => openReply(msg)} className="p-2.5 text-[var(--color-on-surface-variant)] hover:text-[var(--color-gold)] hover:bg-[rgba(232,207,166,0.08)] transition-colors rounded" title="Responder">
                     <span className="material-symbols-outlined text-[20px]">reply</span>
                   </button>
-                  <button onClick={() => toggleRead(msg)} className="p-2.5 text-[var(--color-on-surface-variant)] hover:text-blue-500 hover:bg-blue-50 transition-colors" title={msg.is_read ? 'Marcar no leído' : 'Marcar leído'}>
+                  <button onClick={() => toggleRead(msg)} className="p-2.5 text-[var(--color-on-surface-variant)] hover:text-blue-500 hover:bg-blue-50 transition-colors rounded" title={msg.is_read ? 'Marcar no leído' : 'Marcar leído'}>
                     <span className="material-symbols-outlined text-[20px]">{msg.is_read ? 'mark_email_unread' : 'mark_email_read'}</span>
                   </button>
-                  <button onClick={() => handleDelete(msg.id)} className="p-2.5 text-[var(--color-on-surface-variant)] hover:text-red-500 hover:bg-red-50 transition-colors" title="Eliminar">
+                  <button onClick={() => handleDelete(msg.id)} className="p-2.5 text-[var(--color-on-surface-variant)] hover:text-red-500 hover:bg-red-50 transition-colors rounded" title="Eliminar">
                     <span className="material-symbols-outlined text-[20px]">delete</span>
                   </button>
                 </div>
@@ -100,32 +110,33 @@ export default function AdminMessages() {
           </div>
         )}
       </div>
+      )}
 
       {replyModal && (
         <div className="fixed inset-0 bg-[var(--color-near-black)]/50 flex items-center justify-center z-50 backdrop-blur-sm" onClick={() => setReplyModal(null)}>
           <div className="bg-white w-full max-w-xl mx-4 animate-scale-in" onClick={e => e.stopPropagation()} onKeyDown={handleKeyDown}>
             <form onSubmit={handleSendReply}>
-              <div className="p-8 border-b border-[var(--color-warm-gray)]/40 flex items-center justify-between">
+              <div className="p-8 border-b border-[rgba(0,0,0,0.04)] flex items-center justify-between">
                 <div>
                   <h2 className="font-headline text-xl text-[var(--color-near-black)]">Responder a {replyModal.name}</h2>
                   <p className="font-inter text-xs text-[var(--color-on-surface-variant)] mt-1">{replyModal.email} {replyModal.phone ? `· ${replyModal.phone}` : ''}</p>
                 </div>
-                <button type="button" onClick={() => setReplyModal(null)} className="w-8 h-8 flex items-center justify-center hover:bg-[var(--color-warm-gray)]/30 transition-colors">
+                <button type="button" onClick={() => setReplyModal(null)} className="w-8 h-8 flex items-center justify-center hover:bg-[rgba(0,0,0,0.04)] transition-colors rounded">
                   <span className="material-symbols-outlined text-[18px]">close</span>
                 </button>
               </div>
               <div className="p-8">
-                <div className="mb-5 p-5 bg-[var(--color-ivory)] font-inter text-sm text-[var(--color-on-surface)] leading-relaxed">{replyModal.message}</div>
-                <label className="font-inter text-[10px] uppercase tracking-[0.15em] text-[var(--color-on-surface-variant)] font-medium mb-2 block">Tu respuesta <span className="text-red-400">*</span></label>
+                <div className="mb-5 p-5 bg-[var(--color-ivory)] font-inter text-sm text-[var(--color-on-surface)] leading-relaxed rounded">{replyModal.message}</div>
+                <label className="admin-label">Tu respuesta <span className="text-red-400">*</span></label>
                 <textarea ref={replyRef} value={replyText} onChange={e => setReplyText(e.target.value)} placeholder="Escribe tu respuesta..." rows={5} maxLength={2000}
-                  className="w-full px-4 py-3 border border-[var(--color-warm-gray)] font-inter text-sm focus:outline-none focus:border-[var(--color-gold)] focus:ring-1 focus:ring-[var(--color-gold)]/30 transition-all resize-none" required />
+                  className="admin-input resize-none" required />
               </div>
-              <div className="p-8 border-t border-[var(--color-warm-gray)]/40 flex items-center justify-between">
+              <div className="p-8 border-t border-[rgba(0,0,0,0.04)] flex items-center justify-between">
                 <p className="font-inter text-[10px] text-[var(--color-on-surface-variant)]">Ctrl+Enter para enviar</p>
                 <div className="flex gap-4">
-                  <button type="button" onClick={() => setReplyModal(null)} className="px-6 py-3 border border-[var(--color-warm-gray)] text-[var(--color-on-surface-variant)] font-inter text-xs uppercase tracking-[0.15em] hover:border-[var(--color-near-black)] transition-all">Cancelar</button>
+                  <button type="button" onClick={() => setReplyModal(null)} className="admin-btn-outline">Cancelar</button>
                   <button type="submit" disabled={sending || !replyText.trim()}
-                    className="px-6 py-3 bg-[var(--color-near-black)] text-white font-inter text-xs uppercase tracking-[0.15em] hover:bg-[var(--color-gold)] hover:text-[var(--color-near-black)] transition-all disabled:opacity-50 flex items-center gap-2">
+                    className="admin-btn flex items-center gap-2">
                     {sending ? 'Enviando...' : 'Enviar Respuesta'}
                   </button>
                 </div>

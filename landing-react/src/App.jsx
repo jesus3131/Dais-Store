@@ -14,12 +14,16 @@ const AdminOrders = lazy(() => import('./components/admin/AdminOrders.jsx'));
 const AdminSettings = lazy(() => import('./components/admin/AdminSettings.jsx'));
 const AdminInventory = lazy(() => import('./components/admin/AdminInventory.jsx'));
 const AdminSiteDesign = lazy(() => import('./components/admin/AdminSiteDesign.jsx'));
+const AdminPageBuilder = lazy(() => import('./components/admin/AdminPageBuilder.jsx'));
 
 const AdminMessages = lazy(() => import('./components/admin/AdminMessages.jsx'));
 const AdminCatalogs = lazy(() => import('./components/admin/AdminCatalogs.jsx'));
 const AdminReports = lazy(() => import('./components/admin/AdminReports.jsx'));
 const AdminAccounting = lazy(() => import('./components/admin/AdminAccounting.jsx'));
 const AdminImport = lazy(() => import('./components/admin/AdminImport.jsx'));
+const AdminCustomers = lazy(() => import('./components/admin/AdminCustomers.jsx'));
+const AdminCoupons = lazy(() => import('./components/admin/AdminCoupons.jsx'));
+const AdminUsers = lazy(() => import('./components/admin/AdminUsers.jsx'));
 
 function SuspenseWrapper({ children }) {
   return (
@@ -104,10 +108,31 @@ export default function App() {
                 </AdminLayout>
               </ProtectedRoute>
             } />
+            <Route path="/admin/customers" element={
+              <ProtectedRoute>
+                <AdminLayout>
+                  <SuspenseWrapper><AdminCustomers /></SuspenseWrapper>
+                </AdminLayout>
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/coupons" element={
+              <ProtectedRoute>
+                <AdminLayout>
+                  <SuspenseWrapper><AdminCoupons /></SuspenseWrapper>
+                </AdminLayout>
+              </ProtectedRoute>
+            } />
             <Route path="/admin/import" element={
               <ProtectedRoute>
                 <AdminLayout>
                   <SuspenseWrapper><AdminImport /></SuspenseWrapper>
+                </AdminLayout>
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/page-builder" element={
+              <ProtectedRoute>
+                <AdminLayout>
+                  <SuspenseWrapper><AdminPageBuilder /></SuspenseWrapper>
                 </AdminLayout>
               </ProtectedRoute>
             } />
@@ -122,6 +147,13 @@ export default function App() {
               <ProtectedRoute>
                 <AdminLayout>
                   <SuspenseWrapper><AdminSettings /></SuspenseWrapper>
+                </AdminLayout>
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/users" element={
+              <ProtectedRoute>
+                <AdminLayout>
+                  <SuspenseWrapper><AdminUsers /></SuspenseWrapper>
                 </AdminLayout>
               </ProtectedRoute>
             } />

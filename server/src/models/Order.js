@@ -21,11 +21,11 @@ export async function getById(id) {
   return rows[0] || null;
 }
 
-export async function create({ customer_name, phone, email, items, total, notes }) {
+export async function create({ customer_name, customer_phone, customer_email, phone, email, items, total, notes }) {
   const { rows } = await pool.query(
     `INSERT INTO orders (customer_name, phone, email, items, total, notes)
      VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
-    [customer_name, phone, email, JSON.stringify(items), total, notes || null],
+    [customer_name, customer_phone || phone || null, customer_email || email || null, JSON.stringify(items || []), total, notes || null],
   );
   return rows[0];
 }

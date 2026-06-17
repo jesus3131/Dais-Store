@@ -1,45 +1,65 @@
-import { useEffect, useState } from 'react';
-import { api } from '../../services/api.js';
+const defaultStats = [
+  { number: '200+', label: 'Productos premium' },
+  { number: '500+', label: 'Clientes satisfechos' },
+  { number: '15+', label: 'Años de experiencia' },
+];
 
-export default function AboutUs() {
-  const [aboutImg, setAboutImg] = useState('https://images.unsplash.com/photo-1596464716127-f2a82984de30?w=800&q=80');
+const defaultText = `En DAIS, creemos que la belleza es una forma de expresión personal. Desde nuestros inicios, nos hemos dedicado a seleccionar los mejores productos de belleza, skincare y bienestar para ofrecer a nuestros clientes una experiencia excepcional.\n\nTrabajamos directamente con laboratorios y fabricantes de prestigio para garantizar la más alta calidad en cada producto que llega a tus manos. Nuestro compromiso es brindarte no solo productos extraordinarios, sino también el conocimiento y la asesoría que necesitas para potenciar tu negocio.\n\nÚnete a nuestra comunidad de emprendedores y profesionales de la belleza que confían en DAIS para ofrecer lo mejor a sus clientes.`;
 
-  useEffect(() => {
-    api.getSettings().then((s) => {
-      if (s?.about_image_url) setAboutImg(s.about_image_url);
-    }).catch(() => {});
-  }, []);
+const defaultImages = [
+  'https://images.unsplash.com/photo-1570194065650-d99fb4ee8e39?w=600&q=80',
+  'https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?w=600&q=80',
+];
+
+export default function AboutUs({ sectionData = {}, settings = {} }) {
+  const aboutText = sectionData.text || defaultText;
+  const stats = sectionData.stats || defaultStats;
+  const images = sectionData.images || [settings.about_image_url, settings.about_image_2_url].filter(Boolean);
+  const displayImages = images.length >= 2 ? images : (images.length === 1 ? [images[0], defaultImages[1]] : defaultImages);
 
   return (
-    <section id="about" className="py-20 lg:py-24 bg-white">
+    <section id="about" className="py-20 lg:py-24 bg-[var(--color-pastel-white)]">
       <div className="max-w-[var(--spacing-container-max)] mx-auto px-[var(--spacing-margin-mobile)] lg:px-[var(--spacing-margin-desktop)]">
         <div className="grid lg:grid-cols-2 gap-12 lg:gap-20 items-center">
-          <div className="order-2 lg:order-1">
-            <span className="font-inter text-[10px] uppercase tracking-[0.2em] text-[var(--color-gold)] font-medium">Nuestra Historia</span>
-            <div className="w-10 h-[1px] bg-[var(--color-gold)] mt-4 mb-6" />
-            <h2 className="font-headline text-[var(--text-headline-xl)] text-[var(--color-near-black)] mb-6 leading-[1.15]">
-              Belleza premium<br />con <span className="italic text-[var(--color-gold)]">esencia colombiana</span>
+          <div>
+            <span className="font-inter text-[10px] uppercase tracking-[0.2em] text-[var(--color-gold)] font-medium">Nosotros</span>
+            <div className="section-divider mt-4" />
+            <h2 className="font-headline text-[var(--text-display-md)] text-[var(--color-near-black)] mt-6 leading-tight">
+              Más que una distribuidora,<br />una experiencia de <span className="text-[var(--color-gold)]">belleza</span>
             </h2>
-            <p className="font-body text-sm text-[var(--color-on-surface-variant)] leading-relaxed mb-8">
-              En DAIS seleccionamos cada producto para ofrecer una experiencia de lujo accesible. 
-              Nacimos en Montería con la misión de llevar lo mejor de la cosmética global a cada rincón de Colombia.
-            </p>
-            <div className="flex gap-10">
-              <div>
-                <span className="font-display text-4xl text-[var(--color-gold)]">200+</span>
-                <p className="font-inter text-[10px] uppercase tracking-[0.12em] text-[var(--color-on-surface-variant)] mt-1">Productos premium</p>
-              </div>
-              <div>
-                <span className="font-display text-4xl text-[var(--color-gold)]">500+</span>
-                <p className="font-inter text-[10px] uppercase tracking-[0.12em] text-[var(--color-on-surface-variant)] mt-1">Clientes satisfechos</p>
-              </div>
+            <div className="mt-8 space-y-4">
+              {aboutText ? (
+                aboutText.split('\n').filter(Boolean).map((p, i) => (
+                  <p key={i} className="font-body text-[var(--color-on-surface-variant)] leading-relaxed">{p}</p>
+                ))
+              ) : (
+                <>
+                  <p className="font-body text-[var(--color-on-surface-variant)] leading-relaxed">
+                    En DAIS, creemos que la belleza es una forma de expresión personal. Desde nuestros inicios, nos hemos dedicado a seleccionar los mejores productos de belleza, skincare y bienestar para ofrecer a nuestros clientes una experiencia excepcional.
+                  </p>
+                  <p className="font-body text-[var(--color-on-surface-variant)] leading-relaxed">
+                    Trabajamos directamente con laboratorios y fabricantes de prestigio para garantizar la más alta calidad en cada producto que llega a tus manos. Nuestro compromiso es brindarte no solo productos extraordinarios, sino también el conocimiento y la asesoría que necesitas para potenciar tu negocio.
+                  </p>
+                  <p className="font-body text-[var(--color-on-surface-variant)] leading-relaxed">
+                    Únete a nuestra comunidad de emprendedores y profesionales de la belleza que confían en DAIS para ofrecer lo mejor a sus clientes.
+                  </p>
+                </>
+              )}
+            </div>
+            <div className="flex flex-wrap gap-8 mt-10">
+              {stats.map(stat => (
+                <div key={stat.label}>
+                  <span className="font-display text-3xl text-[var(--color-gold)]">{stat.number}</span>
+                  <p className="font-inter text-[10px] uppercase tracking-[0.12em] text-[var(--color-on-surface-variant)] mt-1">{stat.label}</p>
+                </div>
+              ))}
             </div>
           </div>
-          <div className="order-1 lg:order-2">
-            <div className="relative">
-              <img src={aboutImg} alt="DAIS - Luxury beauty" className="w-full aspect-[3/4] object-cover shadow-luxury-lg" />
-              <div className="absolute -bottom-4 -left-4 w-24 h-24 border border-[var(--color-gold)]/20 -z-10" />
-            </div>
+          <div className="grid grid-cols-2 gap-4">
+            <img src={displayImages[0]} alt=""
+              className="w-full h-64 lg:h-80 object-cover" />
+            <img src={displayImages[1] || displayImages[0]} alt=""
+              className="w-full h-64 lg:h-80 object-cover mt-8" />
           </div>
         </div>
       </div>

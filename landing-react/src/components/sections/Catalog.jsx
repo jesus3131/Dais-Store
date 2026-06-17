@@ -46,7 +46,7 @@ export default function Catalog() {
   };
 
   return (
-    <section id="catalog" className="py-20 lg:py-24 bg-[var(--color-ivory)]">
+    <section id="catalog" className="py-20 lg:py-24 bg-[var(--color-pastel-white)]">
       <div className="max-w-[var(--spacing-container-max)] mx-auto px-[var(--spacing-margin-mobile)] lg:px-[var(--spacing-margin-desktop)]">
         <div className="text-center mb-12">
           <span className="font-inter text-[10px] uppercase tracking-[0.2em] text-[var(--color-gold)] font-medium">Colección</span>
@@ -83,10 +83,10 @@ export default function Catalog() {
               const hasStock = stock === null || stock > 0;
 
               return (
-                <div key={product.id} className="product-card bg-white border border-[var(--color-warm-gray)]/30">
+                <div key={product.id} className="product-card bg-white border border-[var(--color-warm-gray)]/50">
                   <div className="relative aspect-[3/4] overflow-hidden bg-[var(--color-ivory-dark)]">
                     {isNew && <span className="badge-new">Nuevo</span>}
-                    {hasSale && <span className="absolute top-4 right-4 z-10 bg-red-500 text-white font-inter text-[9px] uppercase tracking-[0.12em] px-2.5 py-1">-{discount}%</span>}
+                    {hasSale && <span className="absolute top-4 right-4 z-10 bg-red-500 text-white font-inter text-[9px] uppercase tracking-[0.12em] px-2.5 py-1 rounded">-{discount}%</span>}
                     <button onClick={() => toggleWishlist(product.id)}
                       className="absolute top-4 left-4 z-10 w-8 h-8 rounded-full bg-white/80 backdrop-blur-sm flex items-center justify-center hover:bg-white transition-all">
                       <span className={`material-symbols-outlined text-[16px] ${isWishlisted ? 'text-red-400' : 'text-[var(--color-on-surface-variant)]'}`}>
@@ -118,7 +118,7 @@ export default function Catalog() {
                       </p>
                     )}
                     <button onClick={() => handleAdd(product)} disabled={!hasStock}
-                      className={`w-full py-3 font-inter text-[10px] uppercase tracking-[0.18em] transition-all duration-300 ${
+                      className={`w-full py-3 font-inter text-[10px] uppercase tracking-[0.18em] transition-all duration-300 rounded ${
                         hasStock
                           ? 'bg-[var(--color-near-black)] text-white hover:bg-[var(--color-gold)] hover:text-[var(--color-near-black)]'
                           : 'bg-[var(--color-warm-gray)] text-[var(--color-on-surface-variant)] cursor-not-allowed'

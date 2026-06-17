@@ -6,10 +6,14 @@ import { triggerFloatingNotification } from '../ui/FloatingSaleNotification.jsx'
 export default function AdminSettings() {
   const [keys, setKeys] = useState({});
   const [saving, setSaving] = useState(null);
+  const [loading, setLoading] = useState(true);
   const { addToast } = useToast();
 
   useEffect(() => {
-    api.getSettings().then(s => setKeys(Object.keys(s).reduce((acc, k) => ({ ...acc, [k]: s[k] }), {}))).catch(() => {});
+    setLoading(true);
+    api.getSettings().then(s => setKeys(Object.keys(s).reduce((acc, k) => ({ ...acc, [k]: s[k] }), {})))
+      .catch(() => addToast('Error al cargar configuración', 'error'))
+      .finally(() => setLoading(false));
   }, []);
 
   const handleSave = async (key) => {
@@ -29,6 +33,11 @@ export default function AdminSettings() {
         <p className="font-inter text-sm text-[var(--color-on-surface-variant)] mt-1">Ajustes del sitio</p>
       </div>
 
+      {loading ? (
+        <div className="flex items-center justify-center py-20">
+          <div className="animate-spin w-8 h-8 border-2 border-[var(--color-warm-gray)] border-t-[var(--color-gold)] rounded-full" />
+        </div>
+      ) : (
       <div className="bg-white border border-[var(--color-warm-gray)]/40 p-8">
         <div className="space-y-6">
           {Object.entries(keys).map(([key, value]) => (
@@ -45,6 +54,7 @@ export default function AdminSettings() {
           )}
         </div>
       </div>
+      )}
     </div>
   );
 }

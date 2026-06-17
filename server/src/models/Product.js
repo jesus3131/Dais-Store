@@ -15,18 +15,18 @@ export async function getById(id) {
   return rows[0] || null;
 }
 
-export async function create({ name, price, currency, description, image_url, image_data, category }) {
+export async function create({ name, price, currency, description, image_url, image_data, category, sku, stock, active, old_price, image_url_2 }) {
   const { rows } = await pool.query(
-    `INSERT INTO products (name, price, currency, description, image_url, image_data, category)
-     VALUES ($1, $2, $3, $4, $5, $6, $7)
+    `INSERT INTO products (name, price, currency, description, image_url, image_data, category, sku, stock, active, old_price, image_url_2)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
      RETURNING *`,
-    [name, price, currency || '$', description || null, image_url || null, image_data || null, category || 'general'],
+    [name, price, currency ?? '$', description || null, image_url || null, image_data || null, category || 'general', sku ?? null, stock ?? null, active !== false, old_price ?? null, image_url_2 ?? null],
   );
   return rows[0];
 }
 
 export async function update(id, fields) {
-  const allowed = ['name', 'price', 'currency', 'description', 'image_url', 'image_data', 'category'];
+  const allowed = ['name', 'price', 'currency', 'description', 'image_url', 'image_data', 'category', 'sku', 'stock', 'active', 'old_price', 'image_url_2'];
   const setClauses = [];
   const values = [];
   let idx = 1;

@@ -32,7 +32,7 @@ export default function CartDrawer() {
               <h3 className="font-headline text-xl text-[var(--color-near-black)]">Tu carrito</h3>
               <p className="font-inter text-xs text-[var(--color-on-surface-variant)] mt-1">{totalItems} {totalItems === 1 ? 'producto' : 'productos'}</p>
             </div>
-            <button onClick={closeCart} className="w-10 h-10 rounded-full border border-[var(--color-warm-gray)] flex items-center justify-center hover:border-[var(--color-near-black)] transition-colors">
+            <button onClick={closeCart} className="w-10 h-10 rounded-full border border-[rgba(0,0,0,0.08)] flex items-center justify-center hover:border-[var(--color-near-black)] transition-colors">
               <span className="material-symbols-outlined text-[var(--color-near-black)] text-[18px]">close</span>
             </button>
           </div>
@@ -51,7 +51,7 @@ export default function CartDrawer() {
             <>
               <div className="flex-1 overflow-y-auto px-8 py-6 space-y-5">
                 {cartItems.map(item => (
-                  <div key={item.id} className="flex gap-4 pb-5 border-b border-[var(--color-warm-gray)] last:border-0">
+                  <div key={item.id} className="flex gap-4 pb-5 border-b border-[var(--color-warm-gray)]/50 last:border-0">
                     <div className="w-20 h-20 flex-shrink-0 overflow-hidden bg-[var(--color-ivory-dark)]">
                       <img src={item.image_url || item.image || 'https://images.unsplash.com/photo-1570194065650-d99fb4ee8e39?w=400&q=80'} alt={item.name} className="w-full h-full object-cover" />
                     </div>
@@ -62,12 +62,12 @@ export default function CartDrawer() {
                       </p>
                       <div className="flex items-center gap-3 mt-3">
                         <button onClick={() => removeFromCart(item.id)}
-                          className="w-7 h-7 border border-[var(--color-warm-gray)] flex items-center justify-center hover:border-[var(--color-near-black)] transition-colors">
+                          className="w-7 h-7 border border-[rgba(0,0,0,0.08)] flex items-center justify-center hover:border-[var(--color-near-black)] transition-colors rounded">
                           <span className="material-symbols-outlined text-[12px] text-[var(--color-near-black)]">{item.quantity === 1 ? 'delete' : 'remove'}</span>
                         </button>
                         <span className="font-inter text-sm w-5 text-center">{item.quantity}</span>
                         <button onClick={() => addToCart(item)}
-                          className="w-7 h-7 border border-[var(--color-warm-gray)] flex items-center justify-center hover:border-[var(--color-near-black)] transition-colors">
+                          className="w-7 h-7 border border-[rgba(0,0,0,0.08)] flex items-center justify-center hover:border-[var(--color-near-black)] transition-colors rounded">
                           <span className="material-symbols-outlined text-[12px] text-[var(--color-near-black)]">add</span>
                         </button>
                       </div>
@@ -90,11 +90,11 @@ export default function CartDrawer() {
                 <p className="font-inter text-[11px] text-[var(--color-on-surface-variant)]">*Costos de envío calculados al finalizar</p>
                 <div className="flex gap-3">
                   <button onClick={clearCart}
-                    className="flex-1 py-3.5 border border-[var(--color-warm-gray)] text-[var(--color-near-black)] font-inter text-[10px] uppercase tracking-[0.18em] hover:border-[var(--color-near-black)] transition-all">
+                    className="flex-1 py-3.5 border border-[rgba(0,0,0,0.08)] text-[var(--color-near-black)] font-inter text-[10px] uppercase tracking-[0.18em] hover:border-[var(--color-near-black)] transition-all rounded">
                     Vaciar
                   </button>
                   <button onClick={handleWhatsApp}
-                    className="flex-1 py-3.5 bg-[#25D366] text-white font-inter text-[10px] uppercase tracking-[0.18em] hover:bg-[#1da851] transition-all flex items-center justify-center gap-2">
+                    className="flex-1 py-3.5 bg-[#25D366] text-white font-inter text-[10px] uppercase tracking-[0.18em] hover:bg-[#1da851] transition-all flex items-center justify-center gap-2 rounded">
                     <span className="material-symbols-outlined text-[16px]">call</span>
                     WhatsApp
                   </button>

@@ -1,4 +1,4 @@
-const brands = [
+const defaultBrands = [
   { name: "L'Oréal", icon: 'spa' },
   { name: 'Maybelline', icon: 'brush' },
   { name: 'Neutrogena', icon: 'water_drop' },
@@ -7,7 +7,8 @@ const brands = [
   { name: 'Eucerin', icon: 'healing' },
 ];
 
-export default function Branding() {
+export default function Branding({ sectionData = {} }) {
+  const brands = sectionData.brands || defaultBrands;
   return (
     <section id="brands" className="py-28 lg:py-36 bg-[var(--color-ivory)]">
       <div className="max-w-[var(--spacing-container-max)] mx-auto px-[var(--spacing-margin-mobile)] lg:px-[var(--spacing-margin-desktop)]">

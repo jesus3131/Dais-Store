@@ -1,56 +1,54 @@
-const testimonials = [
-  {
-    name: 'María Fernanda López',
-    role: 'Esteticista Profesional',
-    text: 'La calidad de los productos de DAIS ha transformado los tratamientos que ofrezco a mis clientas. Cada producto es una obra de arte que eleva mi práctica a otro nivel.',
-    rating: 5,
-    image: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&q=80',
-  },
-  {
-    name: 'Carlos Andrés Medina',
-    role: 'CEO · Belleza Premium',
-    text: 'Trabajar con DAIS ha sido una experiencia extraordinaria. Su selecta colección de productos y la atención personalizada marcan la diferencia en el mercado.',
-    rating: 5,
-    image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&q=80',
-  },
-  {
-    name: 'Ana Sofía Martínez',
-    role: 'Emprendedora · Skincare',
-    text: 'Descubrir DAIS fue un punto de inflexión para mi negocio. La curaduría de sus productos y el respaldo de una marca con visión de lujo me dan total confianza.',
-    rating: 5,
-    image: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150&q=80',
-  },
+import { useState } from 'react';
+
+const defaultTestimonials = [
+  { name: 'María Fernanda G.', role: 'Emprendedora de Belleza', text: 'Desde que trabajo con DAIS, la calidad de mis productos se ha disparado. Mis clientas notan la diferencia y yo también. El servicio al cliente es impecable.', rating: 5 },
+  { name: 'Carlos E. Mendoza', role: 'Dueño de Salón', text: 'La variedad de productos y los precios mayoristas son insuperables. Los envíos siempre llegan a tiempo y en perfectas condiciones. Altamente recomendados.', rating: 5 },
+  { name: 'Ana Lucía R.', role: 'Distribuidora Independiente', text: 'DAIS me ha permitido hacer crecer mi negocio de manera increíble. La asesoría personalizada y la calidad de los productos marcan la diferencia.', rating: 5 },
 ];
 
-export default function Testimonials() {
+export default function Testimonials({ sectionData = {} }) {
+  const testimonials = sectionData.items || defaultTestimonials;
+  const [active, setActive] = useState(0);
+
   return (
-    <section id="testimonials" className="py-28 lg:py-36 bg-[var(--color-surface-container)]">
+    <section className="py-20 lg:py-24 bg-[var(--color-near-black)]">
       <div className="max-w-[var(--spacing-container-max)] mx-auto px-[var(--spacing-margin-mobile)] lg:px-[var(--spacing-margin-desktop)]">
-        <div className="text-center mb-16">
+        <div className="text-center mb-12">
           <span className="font-inter text-[10px] uppercase tracking-[0.2em] text-[var(--color-gold)] font-medium">Testimonios</span>
-          <div className="section-divider mt-4" />
-          <h2 className="font-headline text-[var(--text-display-md)] text-[var(--color-near-black)] mt-6">
+          <div className="section-divider mt-4 mx-auto" />
+          <h2 className="font-headline text-[var(--text-display-md)] text-white mt-6">
             Lo que dicen nuestros clientes
           </h2>
         </div>
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-8 max-w-5xl mx-auto stagger-children">
-          {testimonials.map((t, i) => (
-            <div key={i} className="bg-white p-8 border border-[var(--color-warm-gray)] hover:border-[var(--color-gold)]/30 transition-all duration-500 shadow-luxury hover:shadow-luxury-lg">
-              <div className="flex gap-1 mb-5">
-                {Array.from({ length: t.rating }).map((_, j) => (
-                  <span key={j} className="material-symbols-outlined text-[var(--color-gold)] text-[16px]" style={{ fontVariationSettings: "'FILL' 1" }}>star</span>
-                ))}
-              </div>
-              <p className="font-body text-sm text-[var(--color-on-surface-variant)] mb-8 italic leading-relaxed">&ldquo;{t.text}&rdquo;</p>
-              <div className="flex items-center gap-4 pt-5 border-t border-[var(--color-warm-gray)]">
-                <img src={t.image} alt={t.name} className="w-11 h-11 rounded-full object-cover" />
-                <div>
-                  <p className="font-headline text-sm text-[var(--color-near-black)]">{t.name}</p>
-                  <p className="font-inter text-[10px] uppercase tracking-[0.12em] text-[var(--color-on-surface-variant)]">{t.role}</p>
+        <div className="max-w-3xl mx-auto">
+          <div className="relative overflow-hidden">
+            <div className="transition-all duration-500" style={{ transform: `translateX(-${active * 100}%)`, display: 'flex' }}>
+              {testimonials.map((t, idx) => (
+                <div key={idx} className="w-full flex-shrink-0 px-4 lg:px-12 text-center">
+                  <div className="flex justify-center gap-1 mb-6">
+                    {Array.from({ length: 5 }).map((_, i) => (
+                      <span key={i} className={`material-symbols-outlined text-lg ${i < t.rating ? 'text-[var(--color-gold)]' : 'text-white/20'}`}>
+                        {i < t.rating ? 'star' : 'star'}
+                      </span>
+                    ))}
+                  </div>
+                  <p className="font-body text-white/70 text-base lg:text-lg italic leading-relaxed mb-8 max-w-2xl mx-auto">
+                    &ldquo;{t.text}&rdquo;
+                  </p>
+                  <div>
+                    <span className="font-headline text-white text-base">{t.name}</span>
+                    <p className="font-inter text-[11px] text-white/40 mt-1">{t.role}</p>
+                  </div>
                 </div>
-              </div>
+              ))}
             </div>
-          ))}
+          </div>
+          <div className="flex justify-center gap-2 mt-10">
+            {testimonials.map((_, idx) => (
+              <button key={idx} onClick={() => setActive(idx)}
+                className={`w-2 h-2 rounded-full transition-all duration-300 ${idx === active ? 'bg-[var(--color-gold)] w-6' : 'bg-white/20'}`} />
+            ))}
+          </div>
         </div>
       </div>
     </section>

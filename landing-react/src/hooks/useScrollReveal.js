@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 
-export default function useScrollReveal(className = 'scroll-reveal', threshold = 0.1) {
+export default function useScrollReveal(className = 'scroll-reveal', threshold = 0.1, extraDeps = []) {
   const ref = useRef(null);
 
   useEffect(() => {
@@ -24,7 +24,7 @@ export default function useScrollReveal(className = 'scroll-reveal', threshold =
     }
 
     return () => observer.disconnect();
-  }, [className, threshold]);
+  }, [className, threshold, ...extraDeps]);
 
   return ref;
 }

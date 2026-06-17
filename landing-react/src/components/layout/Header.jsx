@@ -18,7 +18,7 @@ export default function Header() {
       else if (s?.site_logo_alt) setSiteName(s.site_logo_alt);
     }).catch(() => {});
     const onScroll = () => setScrolled(window.scrollY > 40);
-    window.addEventListener('scroll', onScroll);
+    window.addEventListener('scroll', onScroll, { passive: true });
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
@@ -56,17 +56,17 @@ export default function Header() {
             )}
           </div>
           <div className="flex items-center gap-2">
-            <button className="hidden lg:flex p-3 hover:bg-[var(--color-gold-soft)] rounded-full transition-colors" aria-label="Buscar">
+            <button className="hidden lg:flex p-3 hover:bg-[rgba(232,207,166,0.08)] rounded-full transition-colors" aria-label="Buscar">
               <span className="material-symbols-outlined text-[var(--color-near-black)] text-[20px]">search</span>
             </button>
-            <button className="hidden lg:flex p-3 hover:bg-[var(--color-gold-soft)] rounded-full transition-colors" aria-label="Favoritos">
+            <button className="hidden lg:flex p-3 hover:bg-[rgba(232,207,166,0.08)] rounded-full transition-colors" aria-label="Favoritos">
               <span className="material-symbols-outlined text-[var(--color-near-black)] text-[20px]">favorite</span>
             </button>
             <Link to="/admin/login"
-              className="hidden lg:flex p-3 hover:bg-[var(--color-gold-soft)] rounded-full transition-colors" aria-label="Perfil">
+              className="hidden lg:flex p-3 hover:bg-[rgba(232,207,166,0.08)] rounded-full transition-colors" aria-label="Perfil">
               <span className="material-symbols-outlined text-[var(--color-near-black)] text-[20px]">person</span>
             </Link>
-            <button className="relative p-3 hover:bg-[var(--color-gold-soft)] rounded-full transition-colors" onClick={toggleCart} aria-label="Carrito">
+            <button className="relative p-3 hover:bg-[rgba(232,207,166,0.08)] rounded-full transition-colors" onClick={toggleCart} aria-label="Carrito">
               <span className="material-symbols-outlined text-[var(--color-near-black)] text-[20px]">shopping_bag</span>
               {totalItems > 0 && (
                 <span className="absolute top-1.5 right-1.5 bg-[var(--color-near-black)] text-white text-[9px] font-inter font-medium w-4 h-4 rounded-full flex items-center justify-center">

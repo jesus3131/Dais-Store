@@ -1,13 +1,14 @@
-const steps = [
+const defaultSteps = [
   { icon: 'search', title: 'Descubre', desc: 'Explora nuestra colección curada de productos premium para el cuidado personal.' },
   { icon: 'checklist', title: 'Selecciona', desc: 'Elige los productos que mejor se adapten a tu estilo y necesidades.' },
   { icon: 'auto_awesome', title: 'Personaliza', desc: 'Recibe asesoría personalizada de nuestros expertos en belleza.' },
   { icon: 'local_shipping', title: 'Recibe', desc: 'Disfruta de envíos rápidos y empaques premium que cuidan cada detalle.' },
 ];
 
-export default function HowItWorks() {
+export default function HowItWorks({ sectionData = {} }) {
+  const steps = sectionData.steps || defaultSteps;
   return (
-    <section id="benefits" className="py-28 lg:py-36 bg-white">
+    <section id="benefits" className="py-28 lg:py-36 bg-[var(--color-pastel-white)]">
       <div className="max-w-[var(--spacing-container-max)] mx-auto px-[var(--spacing-margin-mobile)] lg:px-[var(--spacing-margin-desktop)]">
         <div className="text-center mb-20">
           <span className="font-inter text-[10px] uppercase tracking-[0.2em] text-[var(--color-gold)] font-medium">Experiencia Premium</span>

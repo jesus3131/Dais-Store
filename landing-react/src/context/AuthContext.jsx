@@ -1,29 +1,51 @@
-import { createContext, useContext, useState, useCallback } from 'react';
+import { createContext, useContext, useState, useCallback, useEffect } from 'react';
+import { api, setToken, clearToken } from '../services/api.js';
 
 const AuthContext = createContext();
 
-const ADMIN_USER = 'admin';
-const ADMIN_PASS = 'dais2024';
-
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(() => sessionStorage.getItem('admin_user'));
+  const [role, setRole] = useState(() => sessionStorage.getItem('admin_role'));
+  const [modules, setModules] = useState(() => {
+    try { return JSON.parse(sessionStorage.getItem('admin_modules')); } catch { return []; }
+  });
 
-  const login = useCallback((username, password) => {
-    if (username === ADMIN_USER && password === ADMIN_PASS) {
-      sessionStorage.setItem('admin_user', username);
-      setUser(username);
+  useEffect(() => {
+    const handler = () => { setUser(null); setRole(null); setModules([]); };
+    window.addEventListener('auth:logout', handler);
+    return () => window.removeEventListener('auth:logout', handler);
+  }, []);
+
+  const login = useCallback(async (username, password) => {
+    try {
+      const data = await api.loginUser(username, password);
+      sessionStorage.setItem('admin_user', data.username);
+      sessionStorage.setItem('admin_token', data.token);
+      sessionStorage.setItem('admin_role', data.role || 'worker');
+      sessionStorage.setItem('admin_modules', JSON.stringify(data.modules || []));
+      setToken(data.token);
+      setUser(data.username);
+      setRole(data.role || 'worker');
+      setModules(data.modules || []);
       return true;
+    } catch {
+      return false;
     }
-    return false;
   }, []);
 
   const logout = useCallback(() => {
     sessionStorage.removeItem('admin_user');
+    sessionStorage.removeItem('admin_token');
+    sessionStorage.removeItem('admin_role');
+    sessionStorage.removeItem('admin_modules');
+    clearToken();
     setUser(null);
+    setRole(null);
+    setModules([]);
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, login, logout, isAuthenticated: !!user }}>
+    <AuthContext.Provider value={{ user, role, modules, login, logout, isAuthenticated: !!user }}>
       {children}
     </AuthContext.Provider>
   );

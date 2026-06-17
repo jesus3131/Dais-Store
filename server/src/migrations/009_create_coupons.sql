@@ -1,0 +1,16 @@
+CREATE TABLE IF NOT EXISTS coupons (
+  id SERIAL PRIMARY KEY,
+  code VARCHAR(50) UNIQUE NOT NULL,
+  type VARCHAR(20) NOT NULL DEFAULT 'percentage',
+  value NUMERIC NOT NULL DEFAULT 0,
+  min_purchase NUMERIC DEFAULT 0,
+  max_uses INTEGER DEFAULT 0,
+  used_count INTEGER DEFAULT 0,
+  starts_at TIMESTAMP,
+  expires_at TIMESTAMP,
+  is_active BOOLEAN DEFAULT true,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_coupons_code ON coupons(code);
