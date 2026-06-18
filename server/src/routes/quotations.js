@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import * as Quotation from '../models/Quotation.js';
+import { generateQuotationPdf } from '../models/QuotationPdf.js';
 
 const router = Router();
 
@@ -54,6 +55,26 @@ router.patch('/:id/status', async (req, res) => {
     if (!q) return res.status(404).json({ error: 'Cotización no encontrada' });
     res.json(q);
   } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+router.get('/:id/pdf', async (req, res) => {
+  try {
+    const q = await Quotation.getById(Number(req.params.id));
+    if (!q) return res.status(404).json({ error: 'Cotización no encontrada' });
+
+    if (typeof q.items === 'string') q.items = JSON.parse(q.items);
+
+    const pdf = await generateQuotationPdf(q);
+
+    res.set({
+      'Content-Type': 'application/pdf',
+      'Content-Disposition': `attachment; filename="${(q.number || `COT-${String(q.id).padStart(6, '0')}`).replace(/\//g, '-')}.pdf"`,
+      'Content-Length': pdf.length,
+    });
+    res.send(pdf);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 export default router;

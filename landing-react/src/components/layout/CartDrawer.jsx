@@ -1,21 +1,37 @@
+import { useState } from 'react';
 import { useCart } from '../../context/CartContext.jsx';
 import { api } from '../../services/api.js';
 
 const WHATSAPP_NUMBER = import.meta.env.VITE_WHATSAPP_NUMBER || '573000000000';
+
+const PAYMENT_METHODS = [
+  { value: 'transferencia', label: 'Transferencia Bancaria' },
+  { value: 'nequi', label: 'Nequi' },
+  { value: 'daviplata', label: 'Daviplata' },
+  { value: 'efectivo', label: 'Efectivo' },
+  { value: 'tarjeta', label: 'Tarjeta Débito/Crédito' },
+];
 
 export default function CartDrawer() {
   const {
     cartItems, isOpen, closeCart, addToCart, removeFromCart, clearCart,
     subtotal, totalItems, whatsappMessage,
   } = useCart();
+  const [customerName, setCustomerName] = useState('');
+  const [customerPhone, setCustomerPhone] = useState('');
+  const [paymentMethod, setPaymentMethod] = useState('transferencia');
 
   const whatsappUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${whatsappMessage}`;
 
   const handleWhatsApp = () => {
     api.createOrder({
-      customer_name: 'Cliente Web', phone: WHATSAPP_NUMBER, email: 'cliente@daisstore.com',
+      customer_name: customerName || 'Cliente Web',
+      phone: customerPhone || WHATSAPP_NUMBER,
+      email: 'cliente@daisstore.com',
       items: cartItems.map(i => ({ id: i.id, name: i.name, price: i.price, quantity: i.quantity })),
-      total: subtotal, notes: 'Pedido desde la tienda web',
+      total: subtotal,
+      notes: 'Pedido desde la tienda web',
+      payment_method: paymentMethod,
     }).catch(() => {});
     window.open(whatsappUrl, '_blank', 'noopener,noreferrer');
   };
@@ -80,7 +96,19 @@ export default function CartDrawer() {
                   </div>
                 ))}
               </div>
-              <div className="border-t border-[var(--color-warm-gray)] px-8 py-6 space-y-5">
+              <div className="border-t border-[var(--color-warm-gray)] px-8 py-6 space-y-4">
+                <input type="text" value={customerName} onChange={e => setCustomerName(e.target.value)}
+                  placeholder="Tu nombre"
+                  className="w-full border border-[rgba(0,0,0,0.08)] px-4 py-2.5 font-inter text-sm focus:outline-none focus:border-[var(--color-near-black)] transition-colors" />
+                <input type="tel" value={customerPhone} onChange={e => setCustomerPhone(e.target.value)}
+                  placeholder="Tu teléfono"
+                  className="w-full border border-[rgba(0,0,0,0.08)] px-4 py-2.5 font-inter text-sm focus:outline-none focus:border-[var(--color-near-black)] transition-colors" />
+                <select value={paymentMethod} onChange={e => setPaymentMethod(e.target.value)}
+                  className="w-full border border-[rgba(0,0,0,0.08)] px-4 py-2.5 font-inter text-sm focus:outline-none focus:border-[var(--color-near-black)] transition-colors bg-white">
+                  {PAYMENT_METHODS.map(pm => (
+                    <option key={pm.value} value={pm.value}>{pm.label}</option>
+                  ))}
+                </select>
                 <div className="flex items-center justify-between">
                   <span className="font-inter text-sm text-[var(--color-on-surface-variant)]">Subtotal</span>
                   <span className="font-headline text-xl font-semibold text-[var(--color-near-black)]">

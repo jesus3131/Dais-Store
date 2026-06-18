@@ -28,7 +28,7 @@ function OrderDetailModal({ order, onClose }) {
         <div className="p-8 border-b border-[rgba(0,0,0,0.04)] flex items-center justify-between">
           <div>
             <h2 className="font-headline text-xl text-[var(--color-near-black)]">Detalle del Pedido</h2>
-            <p className="font-inter text-xs text-[var(--color-on-surface-variant)] mt-1">#{order.id?.slice(0, 8) || '—'} · {new Date(order.created_at).toLocaleString('es-CO')}</p>
+            <p className="font-inter text-xs text-[var(--color-on-surface-variant)] mt-1">#{String(order.id).slice(0, 8) || '—'} · {new Date(order.created_at).toLocaleString('es-CO')}</p>
           </div>
           <button onClick={onClose} className="w-8 h-8 flex items-center justify-center hover:bg-[rgba(0,0,0,0.04)] transition-colors rounded">
             <span className="material-symbols-outlined text-[18px]">close</span>
@@ -48,6 +48,7 @@ function OrderDetailModal({ order, onClose }) {
                 {STATUS_LABELS[order.status] || order.status}
               </span>
               <p className="font-inter text-xs text-[var(--color-on-surface-variant)] mt-2">Total: <span className="font-bold text-[var(--color-near-black)]">${Number(order.total).toLocaleString()}</span></p>
+              <p className="font-inter text-xs text-[var(--color-on-surface-variant)] mt-1">Pago: <span className="font-medium text-[var(--color-near-black)]">{order.payment_method || '—'}</span></p>
             </div>
           </div>
 

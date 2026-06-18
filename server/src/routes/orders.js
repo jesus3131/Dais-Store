@@ -34,6 +34,7 @@ router.post('/', catchRoute(async (req, res) => {
     customer_phone: req.body.customer_phone ? sanitizeString(req.body.customer_phone, 50) : null,
     shipping_address: req.body.shipping_address ? sanitizeString(req.body.shipping_address, 500) : null,
     notes: req.body.notes ? sanitizeString(req.body.notes, 2000) : null,
+    payment_method: req.body.payment_method || 'transferencia',
   };
   const order = await Order.create(data);
   res.status(201).json(order);

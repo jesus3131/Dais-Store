@@ -6,6 +6,7 @@ dist/
 *.log
 .DS_Store
 Thumbs.db
-server/uploads/
+server/uploads/*
+!server/uploads/.gitkeep
 server/*.err
 server/*.log

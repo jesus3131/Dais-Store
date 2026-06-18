@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
-import { api } from '../../services/api.js';
+import { api, getToken } from '../../services/api.js';
 import { useToast } from '../../context/ToastContext.jsx';
 import { triggerFloatingNotification } from '../ui/FloatingSaleNotification.jsx';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, AreaChart, Area, CartesianGrid } from 'recharts';
@@ -12,10 +12,10 @@ function formatMoney(n) {
 
 async function req(url, options) {
   if (!options) options = {};
-  const res = await fetch('/api' + url, {
-    headers: { 'Content-Type': 'application/json', ...options.headers },
-    ...options,
-  });
+  const headers = { 'Content-Type': 'application/json', ...options.headers };
+  const token = getToken();
+  if (token) headers['Authorization'] = `Bearer ${token}`;
+  const res = await fetch('/api' + url, { ...options, headers });
   if (!res.ok) {
     const err = await res.json().catch(() => ({ error: res.statusText }));
     throw new Error(err.error || 'HTTP ' + res.status);
@@ -98,6 +98,7 @@ function Modal({ open, onClose, title, wide, children }) {
 function AccountModal({ open, onClose, onSave, edit }) {
   const [form, setForm] = useState({ code: '', name: '', type: 'income', level: 1, is_active: true });
   const [saving, setSaving] = useState(false);
+  const { addToast } = useToast();
   const codeRef = useRef();
 
   useEffect(() => {
@@ -177,6 +178,7 @@ function AccountModal({ open, onClose, onSave, edit }) {
 function ThirdPartyModal({ open, onClose, onSave, edit }) {
   const [form, setForm] = useState({ document_type: 'NIT', document_number: '', name: '', type: 'client', email: '', phone: '', city: '', address: '', is_active: true });
   const [saving, setSaving] = useState(false);
+  const { addToast } = useToast();
   const docRef = useRef();
 
   useEffect(() => {
@@ -421,6 +423,7 @@ function InvoiceModal({ open, onClose, onSave, thirdParties }) {
     due_date: '', items: [{ description: '', quantity: 1, unit_price: '', tax_rate: 0 }],
   });
   const [saving, setSaving] = useState(false);
+  const { addToast } = useToast();
 
   useEffect(() => {
     if (open) {
@@ -597,6 +600,7 @@ function InvoiceModal({ open, onClose, onSave, thirdParties }) {
 function ReconciliationModal({ open, onClose, onSave, bankAccounts }) {
   const [form, setForm] = useState({ bank_account_id: '', bank_balance: '', system_balance: '', reconciliation_date: new Date().toISOString().slice(0, 10), notes: '' });
   const [saving, setSaving] = useState(false);
+  const { addToast } = useToast();
 
   useEffect(() => {
     if (open) {
@@ -712,7 +716,7 @@ export default function AdminAccounting() {
     try {
       switch (activeTab) {
         case 'dashboard':
-          const [entries, summary, accts, tps, bkAccts] = await Promise.all([
+          const [entries, resp, accts, tps, bkAccts] = await Promise.all([
             api.getAccountingEntries().catch(() => []),
             api.getAccountingSummary().catch(() => null),
             req('/account-charts').catch(() => []),
@@ -722,7 +726,13 @@ export default function AdminAccounting() {
           setAccounts(accts);
           setThirdParties(tps);
           setBankAccounts(bkAccts);
-          setDashboardData({ entries, summary });
+          setDashboardData({
+            entries,
+            summary: resp?.summary || null,
+            dailyTotals: resp?.dailyTotals || [],
+            incomeBreakdown: resp?.incomeBreakdown || [],
+            expenseBreakdown: resp?.expenseBreakdown || [],
+          });
           break;
         case 'chart-of-accounts':
           setAccounts(await req('/account-charts').catch(() => []));
@@ -781,25 +791,26 @@ export default function AdminAccounting() {
   thirdParties.forEach(t => { tpCache[t.id] = t; });
 
   const netProfit = useMemo(() => {
-    if (!dashboardData?.summary) return 0;
-    return Number(dashboardData.summary.total_income) - Number(dashboardData.summary.total_expenses);
+    const s = dashboardData?.summary;
+    if (!s) return 0;
+    return (Number(s.total_income) || 0) - (Number(s.total_expenses) || 0);
   }, [dashboardData]);
 
   const cashFlowData = useMemo(() => {
-    if (!dashboardData?.summary?.dailyTotals) return [];
+    if (!dashboardData?.dailyTotals?.length) return [];
     let balance = 0;
-    return dashboardData.summary.dailyTotals.map(d => {
+    return dashboardData.dailyTotals.map(d => {
       balance += Number(d.income) - Number(d.expense);
       return { ...d, balance, income: Number(d.income), expense: Number(d.expense) };
     });
   }, [dashboardData]);
 
   const profitLossData = useMemo(() => {
-    if (!dashboardData?.summary) return [];
+    if (!dashboardData?.incomeBreakdown?.length && !dashboardData?.expenseBreakdown?.length) return [];
     const incomeMap = {};
     const expenseMap = {};
-    (dashboardData.summary.incomeBreakdown || []).forEach(i => { incomeMap[i.category] = Number(i.total); });
-    (dashboardData.summary.expenseBreakdown || []).forEach(e => { expenseMap[e.category] = Number(e.total); });
+    (dashboardData.incomeBreakdown || []).forEach(i => { incomeMap[i.category] = Number(i.total); });
+    (dashboardData.expenseBreakdown || []).forEach(e => { expenseMap[e.category] = Number(e.total); });
     const allCats = [...new Set([...Object.keys(incomeMap), ...Object.keys(expenseMap)])];
     return allCats.map(cat => ({ category: cat, income: incomeMap[cat] || 0, expense: expenseMap[cat] || 0 }));
   }, [dashboardData]);
@@ -924,7 +935,7 @@ export default function AdminAccounting() {
               { label: 'Ingresos del mes', value: formatMoney(dashboardData?.summary?.total_income || 0), icon: 'payments', color: 'text-green-600' },
               { label: 'Gastos del mes', value: formatMoney(dashboardData?.summary?.total_expenses || 0), icon: 'money_off', color: 'text-red-500' },
               { label: 'Utilidad Neta', value: formatMoney(netProfit), icon: 'trending_up', color: netProfit >= 0 ? 'text-green-600' : 'text-red-500' },
-              { label: 'Saldo en Caja', value: formatMoney(dashboardData?.summary?.cash_balance || 0), icon: 'account_balance_wallet', color: 'text-[var(--color-near-black)]' },
+              { label: 'Saldo en Caja', value: formatMoney(cashFlowData.length > 0 ? cashFlowData[cashFlowData.length - 1].balance : 0), icon: 'account_balance_wallet', color: 'text-[var(--color-near-black)]' },
             ].map(card => (
               <div key={card.label} className="bg-white border border-[var(--color-warm-gray)]/40 p-5 hover:border-[var(--color-gold)]/30 transition-all">
                 <div className="flex items-center gap-2 mb-2">
@@ -986,7 +997,7 @@ export default function AdminAccounting() {
               { label: 'Facturas pendientes', value: dashboardData?.entries?.filter(e => e.status === 'pending')?.length || 0, icon: 'receipt_long', color: 'text-amber-600' },
               { label: 'Por cobrar', value: formatMoney(dashboardData?.summary?.pending_income || 0), icon: 'arrow_upward', color: 'text-blue-600' },
               { label: 'Por pagar', value: formatMoney(dashboardData?.summary?.pending_expenses || 0), icon: 'arrow_downward', color: 'text-orange-500' },
-              { label: 'Cuentas activas', value: accounts.filter(a => a.status === 'active').length, icon: 'account_tree', color: 'text-[var(--color-gold)]' },
+              { label: 'Cuentas activas', value: accounts.filter(a => a.is_active !== false).length, icon: 'account_tree', color: 'text-[var(--color-gold)]' },
             ].map(card => (
               <div key={card.label} className="bg-white border border-[var(--color-warm-gray)]/40 p-5 hover:border-[var(--color-gold)]/30 transition-all">
                 <div className="flex items-center gap-2 mb-2">

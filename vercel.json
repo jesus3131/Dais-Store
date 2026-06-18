@@ -1,0 +1,12 @@
+{
+  "git": {
+    "skip": false
+  },
+  "framework": "vite",
+  "buildCommand": "cd landing-react && npm run build",
+  "outputDirectory": "landing-react/dist",
+  "installCommand": "cd landing-react && npm install",
+  "env": {
+    "VITE_API_URL": "@api_url"
+  }
+}

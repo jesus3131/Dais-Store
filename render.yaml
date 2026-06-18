@@ -1,0 +1,23 @@
+services:
+  - type: web
+    name: dais-store-api
+    runtime: node
+    plan: free
+    buildCommand: cd server && npm install
+    startCommand: cd server && npm start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_VERSION
+        value: 22
+      - key: JWT_SECRET
+        generateValue: true
+      - key: ADMIN_PASSWORD
+        sync: false
+      - key: CORS_ORIGINS
+        sync: false
+
+databases:
+  - name: dais-store-db
+    plan: free
+    databaseName: dais_store
+    ipAllowList: []

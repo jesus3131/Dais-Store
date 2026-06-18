@@ -4,7 +4,7 @@ import { useToast } from '../../context/ToastContext.jsx';
 import { triggerFloatingNotification } from '../ui/FloatingSaleNotification.jsx';
 
 const CATEGORIES = ['Rostro', 'Corporal', 'Capilar', 'Maquillaje', 'Accesorios', 'General'];
-const emptyForm = { name: '', sku: '', price: '', old_price: '', stock: '', description: '', image_url: '', image_url_2: '', category: 'General', active: true };
+const emptyForm = { name: '', sku: '', price: '', old_price: '', wholesale_price: '', stock: '', description: '', image_url: '', image_url_2: '', category: 'General', active: true };
 
 export default function AdminProducts() {
   const [products, setProducts] = useState([]);
@@ -35,7 +35,7 @@ export default function AdminProducts() {
   const openEdit = (p) => {
     setForm({
       name: p.name, sku: p.sku || '', price: String(p.price), old_price: String(p.old_price || ''),
-      stock: String(p.stock ?? ''), description: p.description || '', image_url: p.image_url || '',
+      wholesale_price: String(p.wholesale_price || ''), stock: String(p.stock ?? ''), description: p.description || '', image_url: p.image_url || '',
       image_url_2: p.image_url_2 || '', category: p.category || 'General', active: p.active !== false,
     });
     setModal({ type: 'edit', id: p.id });
@@ -51,6 +51,7 @@ export default function AdminProducts() {
         ...form,
         price: parseFloat(form.price),
         old_price: form.old_price ? parseFloat(form.old_price) : null,
+        wholesale_price: form.wholesale_price ? parseFloat(form.wholesale_price) : null,
         stock: form.stock !== '' ? parseInt(form.stock, 10) : null,
         sku: form.sku || null,
       };
@@ -244,6 +245,12 @@ export default function AdminProducts() {
                     <label className="admin-label">Precio anterior</label>
                     <input placeholder="35000" type="number" step="0.01" min="0" value={form.old_price}
                       onChange={e => setForm(f => ({ ...f, old_price: e.target.value }))}
+                      className="admin-input" />
+                  </div>
+                  <div>
+                    <label className="admin-label">Precio por mayor</label>
+                    <input placeholder="22000" type="number" step="0.01" min="0" value={form.wholesale_price}
+                      onChange={e => setForm(f => ({ ...f, wholesale_price: e.target.value }))}
                       className="admin-input" />
                   </div>
                   <div>

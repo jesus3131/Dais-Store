@@ -164,6 +164,10 @@ export async function createReceivablePayable(data) {
 
 /* ===== BANK RECONCILIATION ===== */
 export async function getReconciliations(bankAccountId) {
+  if (!bankAccountId) {
+    const { rows } = await pool.query('SELECT * FROM bank_reconciliation ORDER BY reconciliation_date DESC');
+    return rows;
+  }
   const { rows } = await pool.query(
     'SELECT * FROM bank_reconciliation WHERE bank_account_id = $1 ORDER BY reconciliation_date DESC', [bankAccountId]);
   return rows;

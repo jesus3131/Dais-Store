@@ -27,6 +27,7 @@ router.post('/import', catchRoute(async (req, res) => {
       sku: p.sku || null,
       stock: p.stock != null ? parseInt(p.stock) : null,
       old_price: p.old_price != null ? parseFloat(p.old_price) : null,
+      wholesale_price: p.wholesale_price != null ? parseFloat(p.wholesale_price) : null,
       image_url_2: p.image_url_2 || null,
       currency: p.currency || null,
     });

@@ -1,4 +1,21 @@
 import pool from '../db.js';
+import { createMovement } from './InventoryMovement.js';
+
+async function deductInventory(items) {
+  for (const item of items) {
+    let productId = item.id ? Number(item.id) : null;
+    if (!productId || isNaN(productId)) {
+      const { rows } = await pool.query(
+        'SELECT id FROM products WHERE name = $1 LIMIT 1', [item.name]);
+      productId = rows[0]?.id;
+    }
+    if (!productId) continue;
+    const qty = parseInt(item.quantity || item.qty || 1);
+    try {
+      await createMovement({ product_id: productId, movement_type: 'out', quantity: qty, notes: `Venta: ${item.name}` });
+    } catch {}
+  }
+}
 
 export async function getAll(filters = {}) {
   let sql = 'SELECT * FROM orders WHERE 1=1';
@@ -21,13 +38,15 @@ export async function getById(id) {
   return rows[0] || null;
 }
 
-export async function create({ customer_name, customer_phone, customer_email, phone, email, items, total, notes }) {
+export async function create({ customer_name, customer_phone, customer_email, phone, email, items, total, notes, payment_method }) {
   const { rows } = await pool.query(
-    `INSERT INTO orders (customer_name, phone, email, items, total, notes)
-     VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
-    [customer_name, customer_phone || phone || null, customer_email || email || null, JSON.stringify(items || []), total, notes || null],
+    `INSERT INTO orders (customer_name, phone, email, items, total, notes, payment_method)
+     VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
+    [customer_name, customer_phone || phone || null, customer_email || email || null, JSON.stringify(items || []), total, notes || null, payment_method || 'transferencia'],
   );
-  return rows[0];
+  const order = rows[0];
+  deductInventory(items);
+  return order;
 }
 
 export async function updateStatus(id, status) {

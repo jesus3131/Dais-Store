@@ -71,6 +71,40 @@ function getDetailEndpoint(s) {
   return map[s] || null;
 }
 
+const MONEY_KEYS = new Set([
+  'revenue', 'total_revenue', 'gross_revenue', 'net_revenue',
+  'total_spent', 'stock_value', 'total_discounts', 'avg_discount',
+  'avg_order_value', 'price', 'total',
+]);
+const PCT_KEYS = new Set(['growth_pct', 'pct_discounted', 'repeat_rate', 'revenue_pct', 'value_pct']);
+
+const LABEL_ES = {
+  revenue: 'Ingresos', orders: 'Pedidos', count: 'Cantidad', total_qty: 'Vendidos',
+  total_spent: 'Gasto Total', stock_value: 'Valor Inventario', avg_order_value: 'Ticket Prom.',
+  total_discounts: 'Descuentos', discounted_orders: 'Pedidos con desc.', avg_discount: 'Desc. Prom.',
+  pct_discounted: '% Descontado', total_orders: 'Total Pedidos', total_revenue: 'Ingresos',
+  growth_pct: 'Crecimiento', products: 'Productos', total_stock: 'Stock Total', stock: 'Stock',
+  repeat_customers: 'Clientes Recurrentes', one_time_customers: 'Una Sola Compra',
+  repeat_rate: 'Tasa Recompra', total_customers: 'Total Clientes', gross_revenue: 'Ingreso Bruto',
+  net_revenue: 'Ingreso Neto', total_items: 'Unidades', products_with_stock: 'Con Stock',
+  out_of_stock: 'Sin Stock', low_stock: 'Stock Bajo', price: 'Precio',
+};
+
+const STATUS_ES = { pending: 'Pendiente', confirmed: 'Confirmado', shipped: 'Enviado', delivered: 'Entregado', cancelled: 'Cancelado' };
+const DAY_ES = { monday: 'Lunes', tuesday: 'Martes', wednesday: 'Miércoles', thursday: 'Jueves', friday: 'Viernes', saturday: 'Sábado', sunday: 'Domingo' };
+
+function esLabel(key) { return LABEL_ES[key] || key.replace(/_/g, ' '); }
+function esStatus(s) { return STATUS_ES[s] || s; }
+function esDay(d) { const key = (d || '').trim().toLowerCase(); return DAY_ES[key] || d; }
+function fmtVal(key, val) {
+  if (val == null || val === '—') return '—';
+  const n = Number(val);
+  if (isNaN(n)) return val;
+  if (PCT_KEYS.has(key)) return `${n}%`;
+  if (MONEY_KEYS.has(key)) return `$${n.toLocaleString()}`;
+  return n.toLocaleString();
+}
+
 const CustomTooltip = ({ active, payload, label }) => {
   if (!active || !payload?.length) return null;
   return (
@@ -78,12 +112,7 @@ const CustomTooltip = ({ active, payload, label }) => {
       <p className="text-gray-400 mb-1 text-xs">{label}</p>
       {payload.map((entry, i) => (
         <p key={i} style={{ color: entry.color }} className="font-headline font-semibold">
-          {entry.name}: {typeof entry.value === 'number'
-            ? ['Ingresos','revenue','total_spent','stock_value','total_revenue'].includes(entry.name)
-              ? `$${entry.value.toLocaleString()}`
-              : entry.name === 'growth_pct' ? `${entry.value}%`
-              : entry.value.toLocaleString()
-            : entry.value}
+          {esLabel(entry.name)}: {fmtVal(entry.name, entry.value)}
         </p>
       ))}
     </div>
@@ -118,14 +147,34 @@ function StatRow({ label, value, color }) {
   );
 }
 
+const BARKEY_MAP = {
+  salesDaily: ['revenue', 'orders'], salesWeekly: ['revenue', 'orders'],
+  salesMonthly: ['revenue', 'orders'], salesAnnual: ['revenue', 'orders'],
+  salesByHour: ['revenue', 'orders'], salesByDayOfWeek: ['revenue', 'orders'],
+  salesByCategory: ['count', 'revenue'],
+  monthOverMonth: ['revenue', 'orders'], aovTrend: ['avg_order_value'],
+  discountAnalysis: ['total_discounts', 'avg_discount'],
+  topProducts: ['total_qty'], productCategories: ['count'],
+  priceDistribution: ['count'], ordersByStatus: ['count', 'revenue'],
+  orderValueDist: ['count', 'revenue'], customerNew: ['count'],
+  topCustomers: ['total_spent'], repeatPurchase: ['repeat_rate'],
+  customersByCity: ['count'], inventorySummary: ['total_stock', 'stock_value'],
+  inventoryValue: ['stock', 'stock_value'],
+};
+
 function ChartRenderer({ data, chartType, dataSource, colors }) {
-  if (!data || !data.length) return <p className="font-inter text-sm text-gray-400 text-center py-10">Sin datos</p>;
+  const raw = Array.isArray(data) ? data : (data ? [data] : []);
+  if (!raw.length) return <p className="font-inter text-sm text-gray-400 text-center py-10">Sin datos</p>;
   const isPie = chartType === 'pie';
 
   if (isPie) {
-    const nameKey = data[0]?.name !== undefined ? 'name' : data[0]?.status !== undefined ? 'status' : data[0]?.range !== undefined ? 'range' : data[0]?.category !== undefined ? 'category' : 'name';
-    const valKey = data[0]?.count !== undefined ? 'count' : data[0]?.revenue !== undefined ? 'revenue' : data[0]?.total_qty !== undefined ? 'total_qty' : 'count';
-    const displayData = data.map(d => ({ ...d, _name: d[nameKey] || '—', _val: Number(d[valKey]) || 0 }));
+    const r0 = raw[0];
+    const nameKey = r0.name !== undefined ? 'name' : r0.status !== undefined ? 'status' : r0.range !== undefined ? 'range' : r0.category !== undefined ? 'category' : r0.day_name !== undefined ? 'day_name' : 'name';
+    const valKey = r0.count !== undefined ? 'count' : r0.revenue !== undefined ? 'revenue' : r0.total_qty !== undefined ? 'total_qty' : r0.total_stock !== undefined ? 'total_stock' : r0.stock_value !== undefined ? 'stock_value' : r0.products !== undefined ? 'products' : 'count';
+    const displayData = raw.map(d => {
+      const rawName = d[nameKey] || '—';
+      return { ...d, _name: nameKey === 'status' ? esStatus(rawName) : nameKey === 'day_name' ? esDay(rawName) : rawName, _val: Number(d[valKey]) || 0 };
+    });
     return (
       <ResponsiveContainer width="100%" height={240}>
         <PieChart><Pie data={displayData} cx="50%" cy="50%" innerRadius={50} outerRadius={90} paddingAngle={3} dataKey="_val" nameKey="_name">
@@ -137,33 +186,38 @@ function ChartRenderer({ data, chartType, dataSource, colors }) {
     );
   }
 
-  const xKey = data[0]?.date ? 'date' : data[0]?.day ? 'day' : data[0]?.label ? 'label' : data[0]?.hour !== undefined ? 'hour' : data[0]?.day_name ? 'day_name' : data[0]?.name ? 'name' : data[0]?.range ? 'range' : data[0]?.category ? 'category' : 'name';
-  let barKeys = ['revenue', 'orders'];
-  if (['salesByHour','salesByDayOfWeek','monthOverMonth'].includes(dataSource)) barKeys = ['revenue', 'orders'];
-  else if (dataSource === 'aovTrend') barKeys = ['avg_order_value'];
-  else if (['topProducts','inventoryValue'].includes(dataSource)) barKeys = ['total_qty'];
-  else if (dataSource === 'topCustomers') barKeys = ['total_spent'];
-  else barKeys = ['count'];
+  const r0 = raw[0];
+  const xKey = r0.date ? 'date' : r0.day ? 'day' : r0.label ? 'label' : r0.hour !== undefined ? 'hour' : r0.day_name ? 'day_name' : r0.name ? 'name' : r0.range ? 'range' : r0.category ? 'category' : 'name';
+  const barKeys = BARKEY_MAP[dataSource] || ['count'];
 
   const ChartComp = chartType === 'area' ? AreaChart : chartType === 'line' ? LineChart : BarChart;
+  const xFmt = v => {
+    if (!v || v === '—') return '';
+    if (xKey === 'day_name') return esDay(v).slice(0, 3);
+    if (xKey === 'hour') return `${v}:00`;
+    const s = String(v);
+    if (s.length > 10) return s.slice(5, 10);
+    return s.slice(0, 12);
+  };
 
   return (
     <ResponsiveContainer width="100%" height={240}>
-      <ChartComp data={data} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
+      <ChartComp data={raw} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
         <defs>{barKeys.map(k => (
           <linearGradient key={k} id={`g-${dataSource}-${k}`} x1="0" y1="0" x2="0" y2="1">
             <stop offset="5%" stopColor={colors[0]} stopOpacity={0.25}/><stop offset="95%" stopColor={colors[0]} stopOpacity={0}/>
           </linearGradient>
         ))}</defs>
         <CartesianGrid strokeDasharray="3 3" stroke="rgba(99,102,241,0.08)"/>
-        <XAxis dataKey={xKey} tick={{fontSize:10,fill:'#9ca3af'}} tickFormatter={v => v ? (v.length>10?v.slice(5,10):v.slice(0,12)) : ''}/>
-        <YAxis tick={{fontSize:10,fill:'#9ca3af'}} tickFormatter={v => typeof v==='number'&&v>1000?`$${(v/1000).toFixed(1)}K`:String(v)}/>
+        <XAxis dataKey={xKey} tick={{fontSize:10,fill:'#9ca3af'}} tickFormatter={xFmt}/>
+        <YAxis tick={{fontSize:10,fill:'#9ca3af'}} tickFormatter={v => typeof v==='number'&&v>1000?`${(v/1000).toFixed(1)}K`:String(v)}/>
         <Tooltip content={<CustomTooltip/>}/>
-        <Legend formatter={v=><span className="font-inter text-[10px] text-gray-500">{v}</span>}/>
-        {barKeys.map((key,i) => (
-          <Bar key={key} dataKey={key} fill={colors[i%colors.length]} radius={[2,2,0,0]}
-            name={key==='revenue'?'Ingresos':key==='orders'?'Pedidos':key==='avg_order_value'?'Ticket Prom.':key==='total_qty'?'Vendidos':key==='total_spent'?'Gasto Total':key==='stock_value'?'Valor':key==='count'?'Cantidad':key}/>
-        ))}
+        <Legend formatter={v=><span className="font-inter text-[10px] text-gray-500">{esLabel(v)}</span>}/>
+        {barKeys.map((key,i) => {
+          const Comp = chartType === 'area' ? Area : chartType === 'line' ? Line : Bar;
+          return <Comp key={key} dataKey={key} fill={colors[i%colors.length]} stroke={colors[i%colors.length]}
+            radius={[2,2,0,0]} name={esLabel(key)}/>;
+        })}
       </ChartComp>
     </ResponsiveContainer>
   );
@@ -443,7 +497,7 @@ function OrderDetailPanel({ data, detail }) {
           <div key={i} className={`p-3 rounded text-center ${
             s.status === 'delivered' ? 'bg-green-50' : s.status === 'pending' ? 'bg-yellow-50' : s.status === 'shipped' ? 'bg-blue-50' : s.status === 'cancelled' ? 'bg-red-50' : 'bg-gray-50'
           }`}>
-            <p className="font-inter text-[8px] uppercase tracking-wider text-gray-400">{s.status || '—'}</p>
+            <p className="font-inter text-[8px] uppercase tracking-wider text-gray-400">{esStatus(s.status) || '—'}</p>
             <p className="font-headline text-sm font-semibold">{fmt(s.count)}</p>
             <p className="font-inter text-[9px] text-gray-400">{fmt$(s.revenue)}</p>
             <p className="font-inter text-[8px] text-gray-400">{s.pct || pct(s.count, statuses.reduce((a, x) => a + Number(x.count), 0))}%</p>
@@ -582,16 +636,16 @@ export default function AdminReports() {
         } catch {}
       }
 
-      if (ds === 'inventorySummary' && data?.categories) {
-        setChartData(d => ({ ...d, [w.id]: data.categories }));
-        if (detail?.categories) setDetailData(d => ({ ...d, [w.id]: detail }));
-      } else if (ds === 'discountAnalysis') {
-        setChartData(d => ({ ...d, [w.id]: data ? [data] : [] }));
-        if (detail) setDetailData(d => ({ ...d, [w.id]: detail }));
-      } else {
-        setChartData(d => ({ ...d, [w.id]: data || [] }));
-        if (detail) setDetailData(d => ({ ...d, [w.id]: detail }));
-      }
+      // Normalize data for chart rendering
+      let chartDataNormalized = data;
+      if (ds === 'inventorySummary' && data?.categories) chartDataNormalized = data.categories;
+      else if (ds === 'discountAnalysis') chartDataNormalized = data ? [data] : [];
+      else if (ds === 'customerNew') chartDataNormalized = data?.newByDay || [];
+      else if (ds === 'repeatPurchase') chartDataNormalized = data ? [{ label: 'General', ...data }] : [];
+      else if (!Array.isArray(chartDataNormalized)) chartDataNormalized = chartDataNormalized ? [chartDataNormalized] : [];
+
+      setChartData(d => ({ ...d, [w.id]: chartDataNormalized }));
+      if (detail) setDetailData(d => ({ ...d, [w.id]: detail }));
 
       // Fetch pandas analysis
       try {

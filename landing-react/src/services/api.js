@@ -1,4 +1,4 @@
-const API_BASE = '/api';
+const API_BASE = import.meta.env.VITE_API_URL || '/api';
 
 let _token = sessionStorage.getItem('admin_token');
 
@@ -221,6 +221,22 @@ export const api = {
   updateQuotation: (id, data) => request(`/quotations/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
   deleteQuotation: (id) => request(`/quotations/${id}`, { method: 'DELETE' }),
   updateQuotationStatus: (id, status) => request(`/quotations/${id}/status`, { method: 'PATCH', body: JSON.stringify({ status }) }),
+  downloadQuotationUrl: (id) => `${API_BASE}/quotations/${id}/pdf`,
+  downloadQuotationPdf: async (id, number) => {
+    const headers = {};
+    if (_token) headers['Authorization'] = `Bearer ${_token}`;
+    const res = await fetch(`${API_BASE}/quotations/${id}/pdf`, { headers });
+    if (!res.ok) throw new Error('Error al descargar cotización');
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${(number || `COT-${String(id).padStart(6, '0')}`).replace(/\//g, '-')}.pdf`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  },
 
   // Users
   getUsers: () => request('/users'),

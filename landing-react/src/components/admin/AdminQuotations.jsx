@@ -1,8 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { api } from '../../services/api.js';
 import { useToast } from '../../context/ToastContext.jsx';
 
-const emptyItem = { product_name: '', description: '', quantity: 1, unit_price: 0 };
+const emptyItem = { product_name: '', description: '', quantity: 6, unit_price: 0, wholesale_price: 0, price_type: 'retail', product_id: null };
 
 const emptyForm = {
   client_name: '', client_email: '', client_phone: '', client_document: '',
@@ -10,6 +10,8 @@ const emptyForm = {
   discount: '0',
   notes: '', terms: '', valid_until: '',
 };
+
+const formatCurrency = (n) => `$${Number(n || 0).toLocaleString('es-CO')}`;
 
 const statusConfig = {
   draft: { label: 'Borrador', color: 'bg-gray-100 text-gray-600' },
@@ -19,13 +21,30 @@ const statusConfig = {
   expired: { label: 'Vencida', color: 'bg-yellow-100 text-yellow-600' },
 };
 
+const WHOLESALE_THRESHOLD = 6;
+
+function getEffectivePrice(item) {
+  const qty = parseFloat(item.quantity) || 1;
+  const retail = parseFloat(item.unit_price) || 0;
+  const wholesale = parseFloat(item.wholesale_price) || 0;
+  if (item.price_type === 'wholesale' && wholesale > 0) return wholesale;
+  if (qty >= WHOLESALE_THRESHOLD && wholesale > 0) return wholesale;
+  return retail;
+}
+
 export default function AdminQuotations() {
   const [quotations, setQuotations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [modal, setModal] = useState(null);
+  const [detailId, setDetailId] = useState(null);
+  const [detail, setDetail] = useState(null);
   const [form, setForm] = useState(emptyForm);
   const [saving, setSaving] = useState(false);
   const [statusFilter, setStatusFilter] = useState('');
+  const [products, setProducts] = useState([]);
+  const [searchIdx, setSearchIdx] = useState(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const searchRef = useRef(null);
   const { addToast } = useToast();
 
   const load = () => {
@@ -34,7 +53,31 @@ export default function AdminQuotations() {
   };
   useEffect(load, []);
 
-  const openCreate = () => { setForm(emptyForm); setModal('create'); };
+  const loadProducts = async () => {
+    if (products.length) return;
+    try { setProducts(await api.getProducts()); }
+    catch { addToast('Error al cargar productos', 'error'); }
+  };
+
+  const openDetail = async (id) => {
+    setDetailId(id);
+    setDetail(null);
+    try {
+      const q = await api.getQuotation(id);
+      if (typeof q.items === 'string') q.items = JSON.parse(q.items);
+      setDetail(q);
+    } catch (err) {
+      addToast('Error al cargar detalle', 'error');
+      setDetailId(null);
+    }
+  };
+
+  const openCreate = () => {
+    setForm(emptyForm);
+    setModal('create');
+    loadProducts();
+  };
+
   const openEdit = (q) => {
     setForm({
       client_name: q.client_name, client_email: q.client_email || '', client_phone: q.client_phone || '',
@@ -44,10 +87,14 @@ export default function AdminQuotations() {
       valid_until: q.valid_until ? q.valid_until.slice(0, 10) : '',
     });
     setModal({ type: 'edit', id: q.id });
+    loadProducts();
   };
 
   const calcTotals = (items, discount) => {
-    const subtotal = items.reduce((s, i) => s + (parseFloat(i.quantity) || 0) * (parseFloat(i.unit_price) || 0), 0);
+    const subtotal = items.reduce((s, i) => {
+      const price = getEffectivePrice(i);
+      return s + (parseFloat(i.quantity) || 0) * price;
+    }, 0);
     const disc = parseFloat(discount) || 0;
     const total = Math.max(0, subtotal - disc);
     return { subtotal, discount: disc, total };
@@ -57,6 +104,17 @@ export default function AdminQuotations() {
     setForm(f => {
       const items = [...f.items];
       items[idx] = { ...items[idx], [field]: value };
+
+      if (field === 'quantity') {
+        const qty = parseInt(value) || 1;
+        const wholesale = parseFloat(items[idx].wholesale_price) || 0;
+        if (qty >= WHOLESALE_THRESHOLD && wholesale > 0) {
+          items[idx].price_type = 'wholesale';
+        } else {
+          items[idx].price_type = 'retail';
+        }
+      }
+
       return { ...f, items };
     });
   };
@@ -68,6 +126,54 @@ export default function AdminQuotations() {
   const removeItem = (idx) => {
     setForm(f => ({ ...f, items: f.items.filter((_, i) => i !== idx) }));
   };
+
+  const selectProduct = (idx, product) => {
+    setForm(f => {
+      const items = [...f.items];
+      const qty = parseInt(items[idx].quantity) || 1;
+      const wholesale = parseFloat(product.wholesale_price) || 0;
+      const priceType = qty >= WHOLESALE_THRESHOLD && wholesale > 0 ? 'wholesale' : 'retail';
+      items[idx] = {
+        ...items[idx],
+        product_id: product.id,
+        product_name: product.name,
+        description: product.description || '',
+        unit_price: parseFloat(product.price) || 0,
+        wholesale_price: wholesale,
+        price_type: priceType,
+      };
+      return { ...f, items };
+    });
+    setSearchIdx(null);
+    setSearchQuery('');
+  };
+
+  const togglePriceType = (idx) => {
+    setForm(f => {
+      const items = [...f.items];
+      const current = items[idx];
+      const wholesale = parseFloat(current.wholesale_price) || 0;
+      if (current.price_type === 'wholesale') {
+        items[idx] = { ...current, price_type: 'retail' };
+      } else if (wholesale > 0) {
+        items[idx] = { ...current, price_type: 'wholesale' };
+      }
+      return { ...f, items };
+    });
+  };
+
+  const openSearch = (idx) => {
+    setSearchIdx(idx);
+    setSearchQuery('');
+    setTimeout(() => searchRef.current?.focus(), 50);
+  };
+
+  const filteredProducts = searchQuery.trim()
+    ? products.filter(p =>
+        (p.name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (p.sku || '').toLowerCase().includes(searchQuery.toLowerCase())
+      ).slice(0, 10)
+    : [];
 
   const handleSave = async (e) => {
     e.preventDefault();
@@ -81,10 +187,16 @@ export default function AdminQuotations() {
       const payload = {
         client_name: form.client_name, client_email: form.client_email || null,
         client_phone: form.client_phone || null, client_document: form.client_document || null,
-        items: form.items.map(i => ({
-          product_name: i.product_name || '', description: i.description || '',
-          quantity: parseFloat(i.quantity) || 1, unit_price: parseFloat(i.unit_price) || 0,
-        })),
+        items: form.items.map(i => {
+          const price = getEffectivePrice(i);
+          return {
+            product_name: i.product_name || '', description: i.description || '',
+            quantity: parseFloat(i.quantity) || 1, unit_price: price,
+            product_id: i.product_id || null,
+            wholesale_price: parseFloat(i.wholesale_price) || 0,
+            price_type: i.price_type || 'retail',
+          };
+        }),
         subtotal, discount, tax: 0, total,
         notes: form.notes || null, terms: form.terms || null,
         valid_until: form.valid_until || null,
@@ -183,6 +295,13 @@ export default function AdminQuotations() {
                   </td>
                   <td className="text-right">
                     <div className="flex items-center justify-end gap-1">
+                      <button onClick={() => openDetail(q.id)} className="p-2 text-[var(--color-on-surface-variant)] hover:text-[var(--color-gold)] transition-colors rounded hover:bg-[rgba(232,207,166,0.08)]" title="Ver detalle">
+                        <span className="material-symbols-outlined text-[18px]">visibility</span>
+                      </button>
+                      <button onClick={() => api.downloadQuotationPdf(q.id, q.number).catch(() => addToast('Error al descargar', 'error'))}
+                        className="p-2 text-[var(--color-on-surface-variant)] hover:text-[var(--color-gold)] transition-colors rounded hover:bg-[rgba(232,207,166,0.08)]" title="Descargar PDF">
+                        <span className="material-symbols-outlined text-[18px]">download</span>
+                      </button>
                       <button onClick={() => openEdit(q)} className="p-2 text-[var(--color-on-surface-variant)] hover:text-[var(--color-gold)] transition-colors rounded hover:bg-[rgba(232,207,166,0.08)]" title="Editar">
                         <span className="material-symbols-outlined text-[18px]">edit</span>
                       </button>
@@ -222,7 +341,7 @@ export default function AdminQuotations() {
 
       {modal && (
         <div className="fixed inset-0 bg-[var(--color-near-black)]/50 flex items-center justify-center z-50 backdrop-blur-sm" onClick={() => setModal(null)}>
-          <div className="bg-white w-full max-w-3xl mx-4 max-h-[90vh] overflow-y-auto animate-scale-in" onClick={e => e.stopPropagation()}>
+          <div className="bg-white w-full max-w-4xl mx-4 max-h-[90vh] overflow-y-auto animate-scale-in" onClick={e => e.stopPropagation()}>
             <div className="p-8 border-b border-[rgba(0,0,0,0.04)] flex items-center justify-between">
               <h2 className="font-headline text-xl text-[var(--color-near-black)]">
                 {modal.type === 'edit' ? 'Editar Cotización' : 'Nueva Cotización'}
@@ -271,15 +390,50 @@ export default function AdminQuotations() {
                       Agregar item
                     </button>
                   </div>
-                  <div className="space-y-2">
-                    {form.items.map((item, idx) => (
-                      <div key={idx} className="flex gap-3 items-start p-3 bg-[rgba(0,0,0,0.02)] rounded border border-[rgba(0,0,0,0.04)]">
+                  <div className="space-y-3">
+                    {form.items.map((item, idx) => {
+                      const effectivePrice = getEffectivePrice(item);
+                      const wholesale = parseFloat(item.wholesale_price) || 0;
+                      const canWholesale = wholesale > 0;
+                      return (
+                      <div key={idx} className="flex gap-3 items-start p-4 bg-[rgba(0,0,0,0.02)] rounded border border-[rgba(0,0,0,0.06)]">
                         <div className="flex-1 grid grid-cols-12 gap-2">
-                          <div className="col-span-4">
-                            <input value={item.product_name} onChange={e => updateItem(idx, 'product_name', e.target.value)}
-                              className="admin-input text-xs" placeholder="Producto / Servicio" />
+                          <div className="col-span-4 relative">
+                            <input value={item.product_name}
+                              onFocus={() => openSearch(idx)}
+                              onChange={e => updateItem(idx, 'product_name', e.target.value)}
+                              className="admin-input text-xs pr-8" placeholder="Buscar producto…" />
+                            <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[var(--color-on-surface-variant)] pointer-events-none">
+                              <span className="material-symbols-outlined text-[14px]">search</span>
+                            </span>
+                            {searchIdx === idx && (
+                              <div className="absolute left-0 right-0 top-full mt-1 z-20 bg-white border border-[rgba(0,0,0,0.08)] rounded shadow-lg max-h-56 overflow-y-auto">
+                                <div className="p-2 border-b border-[rgba(0,0,0,0.04)]">
+                                  <input ref={searchRef} value={searchQuery}
+                                    onChange={e => setSearchQuery(e.target.value)}
+                                    className="w-full text-xs p-2 border border-[rgba(0,0,0,0.1)] rounded outline-none focus:border-[var(--color-gold)]"
+                                    placeholder="Escriba para buscar…" />
+                                </div>
+                                {filteredProducts.length === 0 && searchQuery.trim() && (
+                                  <div className="p-4 text-center text-xs text-[var(--color-on-surface-variant)]">Sin resultados</div>
+                                )}
+                                {filteredProducts.map(p => (
+                                  <button key={p.id} type="button" onClick={() => selectProduct(idx, p)}
+                                    className="w-full text-left px-3 py-2 hover:bg-[rgba(232,207,166,0.1)] transition-colors flex items-center justify-between gap-3">
+                                    <div className="min-w-0 flex-1">
+                                      <div className="text-xs font-inter text-[var(--color-near-black)] truncate">{p.name}</div>
+                                      {p.sku && <div className="text-[10px] text-[var(--color-on-surface-variant)]">{p.sku}</div>}
+                                    </div>
+                                    <div className="text-right shrink-0">
+                                      <div className="text-xs font-inter text-[var(--color-gold)]">${Number(p.price).toLocaleString()}</div>
+                                      {p.wholesale_price && <div className="text-[10px] text-[var(--color-on-surface-variant)]">x mayor: ${Number(p.wholesale_price).toLocaleString()}</div>}
+                                    </div>
+                                  </button>
+                                ))}
+                              </div>
+                            )}
                           </div>
-                          <div className="col-span-4">
+                          <div className="col-span-3">
                             <input value={item.description} onChange={e => updateItem(idx, 'description', e.target.value)}
                               className="admin-input text-xs" placeholder="Descripción" />
                           </div>
@@ -289,12 +443,23 @@ export default function AdminQuotations() {
                               className="admin-input text-xs text-center" />
                           </div>
                           <div className="col-span-2">
-                            <input type="number" min="0" step="100" value={item.unit_price}
-                              onChange={e => updateItem(idx, 'unit_price', e.target.value)}
-                              className="admin-input text-xs text-right" placeholder="$0" />
+                            <div className="relative">
+                              <input type="number" min="0" step="100" value={effectivePrice}
+                                onChange={e => updateItem(idx, 'unit_price', e.target.value)}
+                                className="admin-input text-xs text-right pr-6" placeholder="$0" />
+                              {canWholesale && (
+                                <button type="button" onClick={() => togglePriceType(idx)}
+                                  className="absolute right-1 top-1/2 -translate-y-1/2 p-0.5 rounded transition-colors"
+                                  title={item.price_type === 'wholesale' ? 'Precio por mayor' : 'Precio por detal'}>
+                                  <span className={`text-[10px] font-bold ${item.price_type === 'wholesale' ? 'text-blue-500' : 'text-[var(--color-on-surface-variant)]'}`}>
+                                    {item.price_type === 'wholesale' ? '×M' : '×1'}
+                                  </span>
+                                </button>
+                              )}
+                            </div>
                           </div>
-                          <div className="col-span-1 flex items-center justify-center font-inter text-xs text-[var(--color-on-surface-variant)]">
-                            ${((parseFloat(item.quantity) || 0) * (parseFloat(item.unit_price) || 0)).toLocaleString()}
+                          <div className="col-span-2 flex items-center justify-end font-inter text-xs text-[var(--color-near-black)]">
+                            ${((parseFloat(item.quantity) || 0) * effectivePrice).toLocaleString()}
                           </div>
                         </div>
                         {form.items.length > 1 && (
@@ -304,7 +469,14 @@ export default function AdminQuotations() {
                           </button>
                         )}
                       </div>
-                    ))}
+                    );
+                    })}
+                  </div>
+                  <div className="mt-2 flex items-center gap-3">
+                    <span className="text-[10px] font-inter text-[var(--color-on-surface-variant)]">
+                      <span className="inline-block w-3 h-3 rounded bg-blue-100 text-blue-600 text-[8px] text-center leading-3 font-bold mr-1">M</span>
+                      Precio por mayor se aplica automáticamente desde {WHOLESALE_THRESHOLD} unidades
+                    </span>
                   </div>
                 </div>
 
@@ -350,6 +522,140 @@ export default function AdminQuotations() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {detailId && (
+        <div className="fixed inset-0 bg-[var(--color-near-black)]/50 flex items-center justify-center z-50 backdrop-blur-sm" onClick={() => setDetailId(null)}>
+          <div className="bg-white w-full max-w-4xl mx-4 max-h-[90vh] overflow-y-auto animate-scale-in" onClick={e => e.stopPropagation()}>
+            {!detail ? (
+              <div className="flex items-center justify-center py-20">
+                <div className="animate-spin w-8 h-8 border-2 border-[var(--color-warm-gray)] border-t-[var(--color-gold)] rounded-full" />
+              </div>
+            ) : (
+              <>
+                <div className="p-8 border-b border-[rgba(0,0,0,0.04)] flex items-center justify-between">
+                  <h2 className="font-headline text-xl text-[var(--color-near-black)]">{detail.number || `COT-${String(detail.id).padStart(6, '0')}`}</h2>
+                  <div className="flex items-center gap-2">
+                    <button onClick={() => api.downloadQuotationPdf(detail.id, detail.number).catch(() => addToast('Error al descargar', 'error'))}
+                      className="admin-btn-outline text-xs flex items-center gap-1.5">
+                      <span className="material-symbols-outlined text-[16px]">download</span>
+                      PDF
+                    </button>
+                    <button onClick={() => setDetailId(null)} className="w-8 h-8 flex items-center justify-center hover:bg-[rgba(0,0,0,0.04)] transition-colors rounded">
+                      <span className="material-symbols-outlined text-[var(--color-near-black)] text-[18px]">close</span>
+                    </button>
+                  </div>
+                </div>
+                <div className="p-8">
+                  <div className="border border-[rgba(0,0,0,0.06)] rounded-lg p-8 bg-white">
+                    <div className="flex items-start justify-between mb-8">
+                      <div>
+                        <div className="w-28 h-28 bg-[var(--color-warm-gray)] rounded flex items-center justify-center text-[var(--color-on-surface-variant)] text-xs font-inter">
+                          <span className="material-symbols-outlined text-[40px]">store</span>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <div className="font-headline text-xl text-[var(--color-gold)]">COTIZACIÓN</div>
+                        <div className="font-inter text-xs text-[var(--color-on-surface-variant)] mt-1">{detail.number}</div>
+                        <div className="font-inter text-xs text-[var(--color-on-surface-variant)]">Emisión: {new Date(detail.created_at).toLocaleDateString('es-CO')}</div>
+                        {detail.valid_until && <div className="font-inter text-xs text-[var(--color-on-surface-variant)]">Válida hasta: {new Date(detail.valid_until).toLocaleDateString('es-CO')}</div>}
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-6 mb-8">
+                      <div className="bg-[#fafafa] rounded p-4">
+                        <div className="font-headline text-xs text-[var(--color-gold)] uppercase tracking-wider mb-2">Cliente</div>
+                        <div className="font-inter text-sm text-[var(--color-near-black)]">{detail.client_name}</div>
+                        {detail.client_document && <div className="font-inter text-xs text-[var(--color-on-surface-variant)]">Doc: {detail.client_document}</div>}
+                        <div className="font-inter text-xs text-[var(--color-on-surface-variant)]">{detail.client_email}</div>
+                        <div className="font-inter text-xs text-[var(--color-on-surface-variant)]">{detail.client_phone}</div>
+                      </div>
+                      <div className="bg-[#fafafa] rounded p-4">
+                        <div className="font-headline text-xs text-[var(--color-gold)] uppercase tracking-wider mb-2">Estado</div>
+                        <span className={`inline-block px-2 py-0.5 text-[10px] uppercase tracking-wider font-bold rounded ${statusConfig[detail.status]?.color || 'bg-gray-100 text-gray-600'}`}>
+                          {statusConfig[detail.status]?.label || detail.status}
+                        </span>
+                        {detail.created_by_name && <div className="font-inter text-xs text-[var(--color-on-surface-variant)] mt-2">Creado por: {detail.created_by_name}</div>}
+                      </div>
+                    </div>
+
+                    <table className="w-full mb-6">
+                      <thead>
+                        <tr className="bg-[var(--color-gold)]">
+                          <th className="p-2 text-left font-headline text-xs text-white uppercase">#</th>
+                          <th className="p-2 text-left font-headline text-xs text-white uppercase">Producto</th>
+                          <th className="p-2 text-left font-headline text-xs text-white uppercase">Descripción</th>
+                          <th className="p-2 text-center font-headline text-xs text-white uppercase">Cant.</th>
+                          <th className="p-2 text-right font-headline text-xs text-white uppercase">Precio</th>
+                          <th className="p-2 text-right font-headline text-xs text-white uppercase">Tipo</th>
+                          <th className="p-2 text-right font-headline text-xs text-white uppercase">Total</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {(detail.items || []).map((item, idx) => (
+                          <tr key={idx} className={idx % 2 === 1 ? 'bg-[#f9fafb]' : ''}>
+                            <td className="p-2 font-inter text-xs text-[var(--color-near-black)]">{idx + 1}</td>
+                            <td className="p-2 font-inter text-xs text-[var(--color-near-black)]">{item.product_name || '—'}</td>
+                            <td className="p-2 font-inter text-xs text-[var(--color-on-surface-variant)]">{item.description || ''}</td>
+                            <td className="p-2 text-center font-inter text-xs text-[var(--color-near-black)]">{item.quantity || 1}</td>
+                            <td className="p-2 text-right font-inter text-xs text-[var(--color-near-black)]">{formatCurrency(item.unit_price)}</td>
+                            <td className="p-2 text-right">
+                              {item.price_type === 'wholesale' || (item.wholesale_price && (item.quantity || 1) >= WHOLESALE_THRESHOLD) ? (
+                                <span className="inline-block px-1.5 py-0.5 text-[9px] font-bold bg-blue-100 text-blue-600 rounded">× MAYOR</span>
+                              ) : (
+                                <span className="inline-block px-1.5 py-0.5 text-[9px] font-bold bg-gray-100 text-gray-500 rounded">× DETAL</span>
+                              )}
+                            </td>
+                            <td className="p-2 text-right font-inter text-xs text-[var(--color-near-black)]">{formatCurrency((item.quantity || 1) * (item.unit_price || 0))}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+
+                    <div className="flex justify-end mb-8">
+                      <div className="w-64 space-y-2">
+                        <div className="flex justify-between font-inter text-sm">
+                          <span className="text-[var(--color-on-surface-variant)]">Subtotal</span>
+                          <span className="text-[var(--color-near-black)]">{formatCurrency(detail.subtotal)}</span>
+                        </div>
+                        {parseFloat(detail.discount || 0) > 0 && (
+                          <div className="flex justify-between font-inter text-sm">
+                            <span className="text-[var(--color-on-surface-variant)]">Descuento</span>
+                            <span className="text-red-500">-{formatCurrency(detail.discount)}</span>
+                          </div>
+                        )}
+                        {parseFloat(detail.tax || 0) > 0 && (
+                          <div className="flex justify-between font-inter text-sm">
+                            <span className="text-[var(--color-on-surface-variant)]">IVA</span>
+                            <span className="text-[var(--color-near-black)]">{formatCurrency(detail.tax)}</span>
+                          </div>
+                        )}
+                        <div className="flex justify-between font-headline text-lg border-t border-[rgba(0,0,0,0.08)] pt-2">
+                          <span className="text-[var(--color-near-black)]">Total</span>
+                          <span className="text-[var(--color-gold)]">{formatCurrency(detail.total)}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {detail.terms && (
+                      <div className="mb-6">
+                        <div className="font-headline text-xs text-[var(--color-gold)] uppercase tracking-wider mb-2">Términos y Condiciones</div>
+                        <div className="font-inter text-xs text-[var(--color-on-surface-variant)] bg-[#fafafa] rounded p-4 whitespace-pre-wrap">{detail.terms}</div>
+                      </div>
+                    )}
+
+                    {detail.notes && (
+                      <div>
+                        <div className="font-headline text-xs text-[var(--color-gold)] uppercase tracking-wider mb-2">Notas</div>
+                        <div className="font-inter text-xs text-[var(--color-on-surface-variant)] bg-[#fafafa] rounded p-4 whitespace-pre-wrap">{detail.notes}</div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </>
+            )}
           </div>
         </div>
       )}

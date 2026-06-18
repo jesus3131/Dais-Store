@@ -4,7 +4,7 @@ import { api } from '../../services/api.js';
 import { useToast } from '../../context/ToastContext.jsx';
 import { triggerFloatingNotification } from '../ui/FloatingSaleNotification.jsx';
 
-const TEMPLATE_FIELDS = ['name', 'price', 'old_price', 'stock', 'category', 'description', 'image_url', 'sku'];
+const TEMPLATE_FIELDS = ['name', 'price', 'old_price', 'wholesale_price', 'stock', 'category', 'description', 'image_url', 'sku'];
 
 export default function AdminImport() {
   const fileRef = useRef(null);
