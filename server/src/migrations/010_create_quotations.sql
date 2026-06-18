@@ -17,7 +17,7 @@ CREATE TABLE IF NOT EXISTS quotations (
   sent_at TIMESTAMP,
   accepted_at TIMESTAMP,
   rejected_at TIMESTAMP,
-  created_by INTEGER REFERENCES users(id),
+  created_by INTEGER,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
