@@ -500,3 +500,8 @@ h1, h2, h3, h4 { font-family: 'Playfair Display', serif; }
 .admin-section-header {
   @apply flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-8;
 }
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}

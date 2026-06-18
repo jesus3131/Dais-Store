@@ -7,6 +7,7 @@ const MODULES = [
   { id: 'products', label: 'Productos', icon: 'inventory_2' },
   { id: 'orders', label: 'Pedidos', icon: 'receipt_long' },
   { id: 'customers', label: 'Clientes', icon: 'people' },
+  { id: 'quotations', label: 'Cotizaciones', icon: 'request_quote' },
   { id: 'coupons', label: 'Cupones', icon: 'confirmation_number' },
   { id: 'inventory', label: 'Inventario', icon: 'shelf_auto' },
   { id: 'accounting', label: 'Contabilidad', icon: 'account_balance' },

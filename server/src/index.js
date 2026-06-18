@@ -27,6 +27,9 @@ import financialReportRouter from './routes/financialReport.js';
 import customersRouter from './routes/customers.js';
 import couponsRouter from './routes/coupons.js';
 import usersRouter from './routes/users.js';
+import quotationsRouter from './routes/quotations.js';
+import reportsRouter from './routes/reports.js';
+import invoiceRouter from './routes/invoice.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -86,25 +89,71 @@ function requireAuthForMethods(...methods) {
     next();
   };
 }
-app.use('/api/products', requireAuthForMethods('POST', 'PUT', 'PATCH', 'DELETE'), productsRouter);
-app.use('/api/page-sections', requireAuthForMethods('POST', 'PUT', 'PATCH', 'DELETE'), pageSectionsRouter);
-app.use('/api/design-tokens', requireAuthForMethods('POST', 'PUT', 'PATCH', 'DELETE'), designTokensRouter);
+function requireAuthAndModule(moduleName, ...methods) {
+  return (req, res, next) => {
+    if (methods.includes(req.method)) {
+      return authenticateToken(req, res, () => requireModule(moduleName)(req, res, next));
+    }
+    next();
+  };
+}
+app.use('/api/products', requireAuthAndModule('products', 'POST', 'PUT', 'PATCH', 'DELETE'), productsRouter);
+app.use('/api/page-sections', requireAuthAndModule('page-builder', 'POST', 'PUT', 'PATCH', 'DELETE'), pageSectionsRouter);
+app.use('/api/design-tokens', requireAuthAndModule('site-design', 'POST', 'PUT', 'PATCH', 'DELETE'), designTokensRouter);
 
 // ---- Admin-only routes (full auth required) ----
 app.use('/api/settings', requireAuthForMethods('POST', 'PUT', 'PATCH', 'DELETE'), settingsRouter);
 app.use('/api/upload', authenticateToken, requireModule('products'), uploadRouter);
 app.use('/api/inventory', authenticateToken, requireModule('inventory'), inventoryRouter);
 app.use('/api/orders', authenticateToken, requireModule('orders'), ordersRouter);
+app.use('/api', authenticateToken, requireModule('orders'), invoiceRouter);
 app.use('/api/messages', authenticateToken, requireModule('messages'), messagesRouter);
 app.use('/api/catalogs', authenticateToken, requireModule('catalogs'), catalogsRouter);
 app.use('/api/customers', authenticateToken, requireModule('customers'), customersRouter);
 app.use('/api/coupons', authenticateToken, requireModule('coupons'), couponsRouter);
 app.use('/api/users', authenticateToken, requireModule('users'), usersRouter);
+app.use('/api/quotations', authenticateToken, requireModule('quotations'), quotationsRouter);
 app.use('/api/accounting', authenticateToken, requireModule('accounting'), accountingRouter);
 app.use('/api', authenticateToken, requireModule('accounting'), masterDataRouter);
 app.use('/api', authenticateToken, requireModule('accounting'), accountingCoreRouter);
 app.use('/api/inventory-movements', authenticateToken, requireModule('inventory'), inventoryMovementRouter);
+app.use('/api/reports', authenticateToken, requireModule('reports'), reportsRouter);
 app.use('/api/financial-reports', authenticateToken, requireModule('reports'), financialReportRouter);
+
+// Self password change (any authenticated user)
+app.patch('/api/users/me/password', authenticateToken, async (req, res) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+    if (!currentPassword || !newPassword) return res.status(400).json({ error: 'Contraseña actual y nueva requeridas' });
+    if (newPassword.length < 6) return res.status(400).json({ error: 'La nueva contraseña debe tener al menos 6 caracteres' });
+    const { rows } = await pool.query('SELECT password_hash FROM public.users WHERE username = $1', [req.user.username]);
+    if (!rows.length) return res.status(404).json({ error: 'Usuario no encontrado' });
+    if (!bcryptjs.compareSync(currentPassword, rows[0].password_hash))
+      return res.status(400).json({ error: 'La contraseña actual no es correcta' });
+    const hash = bcryptjs.hashSync(newPassword, 10);
+    await pool.query('UPDATE public.users SET password_hash = $1, updated_at = NOW() WHERE username = $2', [hash, req.user.username]);
+    res.json({ message: 'Contraseña actualizada exitosamente' });
+  } catch (err) {
+    console.error('[PASSWORD CHANGE ERROR]', err);
+    res.status(500).json({ error: 'Error al cambiar contraseña' });
+  }
+});
+
+// Analysis proxy to Python pandas service
+app.get('/api/reports-analysis/:type', authenticateToken, requireModule('reports'), async (req, res) => {
+  const { type } = req.params;
+  const { period, from_date, to_date, limit } = req.query;
+  const params = new URLSearchParams({ period: period || 'monthly', from_date: from_date || '', to_date: to_date || '', limit: String(limit || 10) });
+  try {
+    const response = await fetch(`http://127.0.0.1:5000/analyze/${type}?${params}`, { signal: AbortSignal.timeout(15000) });
+    if (!response.ok) throw new Error(`Python service returned ${response.status}`);
+    const data = await response.json();
+    res.json(data);
+  } catch (err) {
+    console.warn(`[ANALYSIS] Fallback for ${type}: ${err.message}`);
+    res.json({ analysis: null, insights: {}, data: [] });
+  }
+});
 
 process.on('uncaughtException', (err, origin) => {
   console.error(`[UNCAUGHT EXCEPTION] origin=${origin}`, err);
@@ -152,9 +201,18 @@ async function syncAdminUser() {
   }
 }
 
+// Security validation
+function securityCheck() {
+  const warnings = [];
+  if (!process.env.JWT_SECRET || process.env.JWT_SECRET === 'dais-store-jwt-secret-change-in-production') warnings.push('JWT_SECRET no configurado o es el valor por defecto');
+  if (!process.env.CORS_ORIGINS) warnings.push('CORS_ORIGINS no configurado — solo se aceptan peticiones locales');
+  if (!process.env.ADMIN_PASSWORD || process.env.ADMIN_PASSWORD === 'dais2024') warnings.push('ADMIN_PASSWORD usa el valor por defecto — cámbielo en .env');
+  if (warnings.length) console.warn(`\n⚠️  Advertencias de seguridad:\n  - ${warnings.join('\n  - ')}\n`);
+}
 const server = app.listen(PORT, async () => {
   console.log(`Server running on http://localhost:${PORT}`);
   await syncAdminUser();
+  securityCheck();
 });
 
 const gracefulShutdown = async (signal) => {

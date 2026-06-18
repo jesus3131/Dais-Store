@@ -165,10 +165,71 @@ export const api = {
   deleteCoupon: (id) => request(`/coupons/${id}`, { method: 'DELETE' }),
   validateCoupon: (code) => request('/coupons/validate', { method: 'POST', body: JSON.stringify({ code }) }),
 
+  // Reports
+  getReportKpiSummary: (params) => request(`/reports/kpi-summary?${new URLSearchParams(params || {}).toString()}`),
+  getReportSales: (params) => request(`/reports/sales?${new URLSearchParams(params || {}).toString()}`),
+  getReportSalesByDay: (params) => request(`/reports/sales-by-day?${new URLSearchParams(params || {}).toString()}`),
+  getReportSalesByHour: (params) => request(`/reports/sales-by-hour?${new URLSearchParams(params || {}).toString()}`),
+  getReportSalesByCategory: (params) => request(`/reports/sales-by-category?${new URLSearchParams(params || {}).toString()}`),
+  getReportAovTrend: (params) => request(`/reports/aov-trend?${new URLSearchParams(params || {}).toString()}`),
+  getReportMonthOverMonth: (params) => request(`/reports/month-over-month?${new URLSearchParams(params || {}).toString()}`),
+  getReportYearOverYear: () => request('/reports/year-over-year'),
+  getReportDiscountAnalysis: (params) => request(`/reports/discount-analysis?${new URLSearchParams(params || {}).toString()}`),
+  getReportTopProducts: (params) => request(`/reports/top-products?${new URLSearchParams(params || {}).toString()}`),
+  getReportProductCategories: () => request('/reports/product-categories'),
+  getReportPriceDistribution: () => request('/reports/price-distribution'),
+  getReportOrdersByStatus: (params) => request(`/reports/orders-by-status?${new URLSearchParams(params || {}).toString()}`),
+  getReportOrderValueDistribution: () => request('/reports/order-value-distribution'),
+  getReportCustomerStats: (params) => request(`/reports/customer-stats?${new URLSearchParams(params || {}).toString()}`),
+  getReportTopCustomers: (params) => request(`/reports/top-customers?${new URLSearchParams(params || {}).toString()}`),
+  getReportRepeatPurchase: () => request('/reports/repeat-purchase-rate'),
+  getReportCustomersByCity: () => request('/reports/customers-by-city'),
+  getReportInventorySummary: () => request('/reports/inventory-summary'),
+  getReportInventoryValue: (params) => request(`/reports/inventory-value?${new URLSearchParams(params || {}).toString()}`),
+  getReportSalesDetail: (params) => request(`/reports/sales-detail?${new URLSearchParams(params || {}).toString()}`),
+  getReportProductDetail: (params) => request(`/reports/product-detail?${new URLSearchParams(params || {}).toString()}`),
+  getReportCustomerDetail: (params) => request(`/reports/customer-detail?${new URLSearchParams(params || {}).toString()}`),
+  getReportInventoryDetail: () => request('/reports/inventory-detail'),
+  getReportOrderDetail: (params) => request(`/reports/order-detail?${new URLSearchParams(params || {}).toString()}`),
+  getReportFinancialDetail: (params) => request(`/reports/financial-detail?${new URLSearchParams(params || {}).toString()}`),
+
+  // Report Analysis (pandas)
+  getReportAnalysis: (type, params) => request(`/reports-analysis/${type}?${new URLSearchParams(params || {}).toString()}`),
+
+  // Invoice
+  downloadInvoiceUrl: (orderId) => `${API_BASE}/orders/${orderId}/invoice`,
+  downloadInvoice: async (orderId) => {
+    const headers = {};
+    if (_token) headers['Authorization'] = `Bearer ${_token}`;
+    const res = await fetch(`${API_BASE}/orders/${orderId}/invoice`, { headers });
+    if (!res.ok) throw new Error('Error al descargar factura');
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `factura-${String(orderId).padStart(6, '0')}.pdf`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  },
+
+  // Quotations
+  getQuotations: () => request('/quotations'),
+  getQuotation: (id) => request(`/quotations/${id}`),
+  createQuotation: (data) => request('/quotations', { method: 'POST', body: JSON.stringify(data) }),
+  updateQuotation: (id, data) => request(`/quotations/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+  deleteQuotation: (id) => request(`/quotations/${id}`, { method: 'DELETE' }),
+  updateQuotationStatus: (id, status) => request(`/quotations/${id}/status`, { method: 'PATCH', body: JSON.stringify({ status }) }),
+
   // Users
   getUsers: () => request('/users'),
   getUser: (id) => request(`/users/${id}`),
   createUser: (data) => request('/users', { method: 'POST', body: JSON.stringify(data) }),
   updateUser: (id, data) => request(`/users/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
   deleteUser: (id) => request(`/users/${id}`, { method: 'DELETE' }),
+
+  // Self password change
+  changePassword: (currentPassword, newPassword) =>
+    request('/users/me/password', { method: 'PATCH', body: JSON.stringify({ currentPassword, newPassword }) }),
 };

@@ -24,6 +24,7 @@ const AdminImport = lazy(() => import('./components/admin/AdminImport.jsx'));
 const AdminCustomers = lazy(() => import('./components/admin/AdminCustomers.jsx'));
 const AdminCoupons = lazy(() => import('./components/admin/AdminCoupons.jsx'));
 const AdminUsers = lazy(() => import('./components/admin/AdminUsers.jsx'));
+const AdminQuotations = lazy(() => import('./components/admin/AdminQuotations.jsx'));
 
 function SuspenseWrapper({ children }) {
   return (
@@ -154,6 +155,13 @@ export default function App() {
               <ProtectedRoute>
                 <AdminLayout>
                   <SuspenseWrapper><AdminUsers /></SuspenseWrapper>
+                </AdminLayout>
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/quotations" element={
+              <ProtectedRoute>
+                <AdminLayout>
+                  <SuspenseWrapper><AdminQuotations /></SuspenseWrapper>
                 </AdminLayout>
               </ProtectedRoute>
             } />

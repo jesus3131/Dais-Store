@@ -205,6 +205,10 @@ export default function AdminOrders() {
                     <button onClick={() => setDetailOrder(o)} className="p-2 text-[var(--color-on-surface-variant)] hover:text-[var(--color-gold)] transition-colors rounded hover:bg-[rgba(232,207,166,0.08)]" title="Ver detalle">
                       <span className="material-symbols-outlined text-[18px]">visibility</span>
                     </button>
+                    <button onClick={() => api.downloadInvoice(o.id).catch(() => addToast('Error al descargar factura', 'error'))}
+                      className="p-2 text-[var(--color-on-surface-variant)] hover:text-[var(--color-gold)] transition-colors rounded hover:bg-[rgba(232,207,166,0.08)]" title="Descargar factura PDF">
+                      <span className="material-symbols-outlined text-[18px]">receipt</span>
+                    </button>
                     <button onClick={() => handleDelete(o.id)} className="p-2 text-[var(--color-on-surface-variant)] hover:text-red-500 transition-colors rounded hover:bg-red-50" title="Eliminar">
                       <span className="material-symbols-outlined text-[18px]">delete</span>
                     </button>
