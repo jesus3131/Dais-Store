@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
-import { api, getToken } from '../../services/api.js';
+import { api, getToken, API_BASE } from '../../services/api.js';
 import { useToast } from '../../context/ToastContext.jsx';
 import { triggerFloatingNotification } from '../ui/FloatingSaleNotification.jsx';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, AreaChart, Area, CartesianGrid } from 'recharts';
@@ -15,7 +15,7 @@ async function req(url, options) {
   const headers = { 'Content-Type': 'application/json', ...options.headers };
   const token = getToken();
   if (token) headers['Authorization'] = `Bearer ${token}`;
-  const res = await fetch('/api' + url, { ...options, headers });
+  const res = await fetch(API_BASE + url, { ...options, headers });
   if (!res.ok) {
     const err = await res.json().catch(() => ({ error: res.statusText }));
     throw new Error(err.error || 'HTTP ' + res.status);

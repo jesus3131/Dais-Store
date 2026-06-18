@@ -1,4 +1,6 @@
-const API_BASE = import.meta.env.VITE_API_URL || '/api';
+const base = import.meta.env.VITE_API_URL || '';
+const API_BASE = base ? `${base}/api` : '/api';
+export { API_BASE };
 
 let _token = sessionStorage.getItem('admin_token');
 
