@@ -1,24 +1,3 @@
--- Tablas de productos y configuración
-CREATE TABLE IF NOT EXISTS products (
-  id SERIAL PRIMARY KEY,
-  name VARCHAR(255) NOT NULL,
-  price NUMERIC NOT NULL,
-  currency VARCHAR(10) DEFAULT '$',
-  description TEXT,
-  image_url TEXT,
-  image_data TEXT,
-  category VARCHAR(100) DEFAULT 'general',
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-
-CREATE TABLE IF NOT EXISTS site_settings (
-  key VARCHAR(255) PRIMARY KEY,
-  value TEXT,
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-
 -- Seed demo data only on fresh install (no products exist yet)
 DO $$
 BEGIN
@@ -32,10 +11,6 @@ BEGIN
       ('Soft Rose Liquid Blush', 27200, '$', 'Rubor líquido mate de larga duración. Fórmula ligera que se difumina fácilmente. Tonos rosados naturales.', 'https://images.unsplash.com/photo-1596462502278-27bfdc403348?w=600&q=80', 'Maquillaje'),
       ('Velvet Lipstick Collection', 35800, '$', 'Colección de 3 labiales mate terciopelo. Fórmula enriquecida con vitamina E. Larga duración sin resecar los labios.', 'https://images.unsplash.com/photo-1586495777744-4413f21062fa?w=600&q=80', 'Maquillaje'),
       ('Daily Protection SPF50', 32000, '$', 'Protector solar facial SPF50+ textura ligera. Protege de rayos UVA/UVB. No graso, ideal para uso diario bajo el maquillaje.', 'https://images.unsplash.com/photo-1570194065650-d99fb4ee8e39?w=600&q=80', 'Rostro');
-
-    INSERT INTO inventory (product_id, quantity, min_stock)
-      SELECT id, 50, 10 FROM products
-      ON CONFLICT (product_id) DO NOTHING;
   END IF;
 END $$;
 
