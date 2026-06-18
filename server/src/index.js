@@ -78,6 +78,7 @@ app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 // ---- Auth-free routes (landing page & customer actions) ----
 app.use('/api/auth', authRouter);
 app.get('/api/health', (_req, res) => { res.json({ status: 'ok' }); });
+app.get('/', (_req, res) => { res.redirect(301, 'https://dais-store.vercel.app'); });
 app.post('/api/orders', orderLimiter, ordersRouter);  // customer places order
 app.post('/api/messages', messagesRouter);              // contact form
 app.post('/api/coupons/validate', couponsRouter);       // coupon validation
