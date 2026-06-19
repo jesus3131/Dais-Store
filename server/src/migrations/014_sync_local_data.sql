@@ -1,4 +1,5 @@
 -- Sync local data to production
+CREATE EXTENSION IF NOT EXISTS pgcrypto;
 
 -- 1. Site Settings
 INSERT INTO site_settings (key, value) VALUES
