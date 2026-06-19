@@ -10,3 +10,10 @@ server/uploads/*
 !server/uploads/.gitkeep
 server/*.err
 server/*.log
+
+.vercel
+opencode.json
+*.bat
+.env.vercel
+TODO.md
+frontend2.err
