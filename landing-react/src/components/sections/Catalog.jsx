@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useCart } from '../../context/CartContext.jsx';
-import { api } from '../../services/api.js';
+import { api, getImageUrl } from '../../services/api.js';
 import QuickView from './QuickView.jsx';
 
 export default function Catalog() {
@@ -94,9 +94,9 @@ export default function Catalog() {
                       </span>
                     </button>
                     <div className="product-image relative w-full h-full cursor-pointer" onClick={() => setQuickView(product)}>
-                      <img src={product.image_url || 'https://images.unsplash.com/photo-1570194065650-d99fb4ee8e39?w=600&q=80'}
+                      <img src={getImageUrl(product.image_url) || 'https://images.unsplash.com/photo-1570194065650-d99fb4ee8e39?w=600&q=80'}
                         alt={product.name} className="w-full h-full object-cover" />
-                      {secondImage && <div className="product-image-secondary"><img src={secondImage} alt="" className="w-full h-full object-cover" /></div>}
+                      {secondImage && <div className="product-image-secondary"><img src={getImageUrl(secondImage)} alt="" className="w-full h-full object-cover" /></div>}
                     </div>
                   </div>
                   <div className="p-5">

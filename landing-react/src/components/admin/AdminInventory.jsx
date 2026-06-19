@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, Fragment } from 'react';
-import { api } from '../../services/api.js';
+import { api, getImageUrl } from '../../services/api.js';
 import { useToast } from '../../context/ToastContext.jsx';
 import { triggerFloatingNotification } from '../ui/FloatingSaleNotification.jsx';
 
@@ -258,7 +258,7 @@ export default function AdminInventory() {
                     <td>
                       {item.image_url ? (
                         <div className="w-12 h-12 overflow-hidden bg-[var(--color-ivory)] flex-shrink-0 rounded">
-                          <img src={item.image_url} alt="" className="w-full h-full object-cover" />
+                          <img src={getImageUrl(item.image_url)} alt="" className="w-full h-full object-cover" />
                         </div>
                       ) : (
                         <div className="w-12 h-12 bg-[rgba(0,0,0,0.03)] flex items-center justify-center rounded">

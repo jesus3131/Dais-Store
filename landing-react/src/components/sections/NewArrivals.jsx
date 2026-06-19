@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { api } from '../../services/api.js';
+import { api, getImageUrl } from '../../services/api.js';
 import { useCart } from '../../context/CartContext.jsx';
 
 export default function NewArrivals() {
@@ -38,7 +38,7 @@ export default function NewArrivals() {
               onClick={() => handleAdd(item)}
             >
               <div className="relative aspect-square bg-white rounded-xl mb-4 overflow-hidden shadow-inner">
-                <img src={item.image_url} alt={item.name} className="w-full h-full object-cover rounded-lg group-hover:scale-110 transition-transform duration-700" />
+                <img src={getImageUrl(item.image_url)} alt={item.name} className="w-full h-full object-cover rounded-lg group-hover:scale-110 transition-transform duration-700" />
                 <span className="absolute top-3 left-3 px-3 py-1 bg-white/90 backdrop-blur-md text-primary font-label-md text-[10px] rounded-full uppercase shadow-sm">
                   Nuevo
                 </span>

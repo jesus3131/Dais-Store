@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { api } from '../../services/api.js';
+import { api, getImageUrl } from '../../services/api.js';
 import { useToast } from '../../context/ToastContext.jsx';
 import { triggerFloatingNotification } from '../ui/FloatingSaleNotification.jsx';
 
@@ -156,7 +156,7 @@ export default function AdminProducts() {
                     <div className="flex items-center gap-4">
                       {p.image_url ? (
                         <div className="w-12 h-12 overflow-hidden flex-shrink-0 bg-[var(--color-ivory)] rounded">
-                          <img src={p.image_url} alt="" className="w-full h-full object-cover" />
+                          <img src={getImageUrl(p.image_url)} alt="" className="w-full h-full object-cover" />
                         </div>
                       ) : (
                         <div className="w-12 h-12 bg-[rgba(0,0,0,0.03)] flex items-center justify-center flex-shrink-0 rounded">
@@ -286,7 +286,7 @@ export default function AdminProducts() {
                       onChange={e => setForm(f => ({ ...f, image_url: e.target.value }))} type="url"
                       className="admin-input" />
                     {form.image_url && (
-                      <img src={form.image_url} alt="Preview" className="mt-3 w-20 h-20 object-cover border border-[rgba(0,0,0,0.06)] rounded"
+                      <img src={getImageUrl(form.image_url)} alt="Preview" className="mt-3 w-20 h-20 object-cover border border-[rgba(0,0,0,0.06)] rounded"
                         onError={e => { e.target.style.display = 'none'; }} />
                     )}
                   </div>

@@ -1,11 +1,12 @@
 import { useState } from 'react';
+import { getImageUrl } from '../../services/api.js';
 
 export default function QuickView({ product, onClose, onAdd }) {
   const [quantity, setQuantity] = useState(1);
   const [selectedImage, setSelectedImage] = useState(0);
 
   const images = [
-    product.image_url || 'https://images.unsplash.com/photo-1570194065650-d99fb4ee8e39?w=800&q=80',
+    getImageUrl(product.image_url) || 'https://images.unsplash.com/photo-1570194065650-d99fb4ee8e39?w=800&q=80',
     'https://images.unsplash.com/photo-1596462502278-27bfdc403348?w=800&q=80',
     'https://images.unsplash.com/photo-1541643600914-78b084683601?w=800&q=80',
   ];

@@ -1,5 +1,15 @@
 const base = import.meta.env.VITE_API_URL || '';
 const API_BASE = base ? `${base}/api` : '/api';
+
+const IMAGE_URL_KEYS = new Set([
+  'site_logo_url', 'hero_bg_image_url', 'about_image_url', 'about_image_2_url',
+]);
+
+export function getImageUrl(path) {
+  if (!path || path.startsWith('http://') || path.startsWith('https://')) return path;
+  return base ? `${base}${path}` : path;
+}
+
 export { API_BASE };
 
 let _token = sessionStorage.getItem('admin_token');
@@ -69,7 +79,17 @@ export const api = {
   replyMessage: (id, reply) => request(`/messages/${id}/reply`, { method: 'PATCH', body: JSON.stringify({ reply }) }),
 
   // Settings
-  getSettings: () => request('/settings'),
+  getSettings: async () => {
+    const settings = await request('/settings');
+    if (settings && typeof settings === 'object') {
+      for (const key of Object.keys(settings)) {
+        if (IMAGE_URL_KEYS.has(key)) {
+          settings[key] = getImageUrl(settings[key]);
+        }
+      }
+    }
+    return settings;
+  },
   updateSetting: (key, value) => request(`/settings/${key}`, { method: 'PUT', body: JSON.stringify({ value }) }),
 
   // Upload

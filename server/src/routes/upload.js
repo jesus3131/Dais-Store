@@ -28,7 +28,10 @@ const router = Router();
 
 router.post('/', upload.single('image'), (req, res) => {
   if (!req.file) return res.status(400).json({ error: 'No se subió ninguna imagen' });
-  const url = `/uploads/${req.file.filename}`;
+  const protocol = req.headers['x-forwarded-proto'] || req.protocol;
+  const host = req.headers['x-forwarded-host'] || req.get('host');
+  const base = `${protocol}://${host}`;
+  const url = `${base}/uploads/${req.file.filename}`;
   res.json({ url, filename: req.file.filename });
 });
 

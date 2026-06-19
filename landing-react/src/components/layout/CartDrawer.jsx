@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useCart } from '../../context/CartContext.jsx';
-import { api } from '../../services/api.js';
+import { api, getImageUrl } from '../../services/api.js';
 
 const WHATSAPP_NUMBER = import.meta.env.VITE_WHATSAPP_NUMBER || '573000000000';
 
@@ -69,7 +69,7 @@ export default function CartDrawer() {
                 {cartItems.map(item => (
                   <div key={item.id} className="flex gap-4 pb-5 border-b border-[var(--color-warm-gray)]/50 last:border-0">
                     <div className="w-20 h-20 flex-shrink-0 overflow-hidden bg-[var(--color-ivory-dark)]">
-                      <img src={item.image_url || item.image || 'https://images.unsplash.com/photo-1570194065650-d99fb4ee8e39?w=400&q=80'} alt={item.name} className="w-full h-full object-cover" />
+                      <img src={getImageUrl(item.image_url) || getImageUrl(item.image) || 'https://images.unsplash.com/photo-1570194065650-d99fb4ee8e39?w=400&q=80'} alt={item.name} className="w-full h-full object-cover" />
                     </div>
                     <div className="flex-1 min-w-0">
                       <h4 className="font-headline text-sm text-[var(--color-near-black)]">{item.name}</h4>

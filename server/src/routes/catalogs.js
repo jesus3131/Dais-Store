@@ -36,7 +36,10 @@ router.get('/', async (_req, res) => {
 
 router.post('/', upload.single('file'), async (req, res) => {
   try {
-    const url = req.file ? `/uploads/catalogs/${req.file.filename}` : req.body.url;
+    const protocol = req.headers['x-forwarded-proto'] || req.protocol;
+    const host = req.headers['x-forwarded-host'] || req.get('host');
+    const base = `${protocol}://${host}`;
+    const url = req.file ? `${base}/uploads/catalogs/${req.file.filename}` : req.body.url;
     const catalog = await Catalog.create({
       title: req.body.title,
       filename: req.file?.filename || null,
