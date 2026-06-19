@@ -6,7 +6,7 @@ const IMAGE_URL_KEYS = new Set([
 ]);
 
 export function getImageUrl(path) {
-  if (!path || path.startsWith('http://') || path.startsWith('https://')) return path;
+  if (!path || path.startsWith('http://') || path.startsWith('https://') || path.startsWith('data:')) return path;
   return base ? `${base}${path}` : path;
 }
 

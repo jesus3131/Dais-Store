@@ -187,7 +187,7 @@ export default function AdminSiteDesign() {
       setUploadsBusy(b => ({ ...b, [kind]: true }));
       const res = await api.uploadImage(formData);
       const keyMap = { logo: 'site_logo_url', hero: 'hero_bg_image_url', about: 'about_image_url', about2: 'about_image_2_url' };
-      setKey(keyMap[kind] || 'about_image_url', res.url);
+      setKey(keyMap[kind] || 'about_image_url', res.dataUrl || res.url);
       addToast('Imagen subida correctamente');
       triggerFloatingNotification({ name: 'Imagen subida', product: kind, icon: 'image', time: 'recién' });
     } catch { addToast('Error subiendo la imagen'); }

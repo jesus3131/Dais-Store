@@ -14,8 +14,30 @@ export default function AdminProducts() {
   const [saving, setSaving] = useState(false);
   const [search, setSearch] = useState('');
   const [catFilter, setCatFilter] = useState('');
+  const [uploadsBusy, setUploadsBusy] = useState({});
   const { addToast } = useToast();
   const nameRef = useRef();
+  const fileInputRef = useRef(null);
+  const [uploadTarget, setUploadTarget] = useState(null);
+
+  const handleImageUpload = async () => {
+    const el = fileInputRef.current;
+    if (!el || !el.files?.[0] || !uploadTarget) return;
+    const file = el.files[0];
+    const formData = new FormData();
+    formData.append('image', file);
+    try {
+      setUploadsBusy(b => ({ ...b, [uploadTarget]: true }));
+      const res = await api.uploadImage(formData);
+      setForm(f => ({ ...f, [uploadTarget]: res.dataUrl || res.url }));
+      addToast('Imagen subida');
+    } catch { addToast('Error al subir imagen', 'error'); }
+    finally {
+      setUploadsBusy(b => ({ ...b, [uploadTarget]: false }));
+      setUploadTarget(null);
+      el.value = '';
+    }
+  };
 
   const load = () => {
     setLoading(true);
@@ -218,6 +240,7 @@ export default function AdminProducts() {
                 <span className="material-symbols-outlined text-[var(--color-near-black)] text-[18px]">close</span>
               </button>
             </div>
+            <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />
             <form onSubmit={handleSave}>
               <div className="p-8 space-y-6">
                 <div className="grid grid-cols-3 gap-5">
@@ -281,20 +304,34 @@ export default function AdminProducts() {
                 </div>
                 <div className="grid grid-cols-2 gap-5">
                   <div>
-                    <label className="admin-label">URL de imagen principal</label>
-                    <input placeholder="https://..." value={form.image_url}
-                      onChange={e => setForm(f => ({ ...f, image_url: e.target.value }))} type="url"
-                      className="admin-input" />
+                    <label className="admin-label">Imagen principal</label>
+                    <div className="flex gap-2">
+                      <input placeholder="https://..." value={form.image_url}
+                        onChange={e => setForm(f => ({ ...f, image_url: e.target.value }))} type="url"
+                        className="admin-input flex-1" />
+                      <button type="button" disabled={uploadsBusy['image_url']}
+                        onClick={() => { setUploadTarget('image_url'); fileInputRef.current?.click(); }}
+                        className="px-3 py-2 border border-[var(--color-warm-gray)] text-xs hover:border-[var(--color-near-black)] transition-all disabled:opacity-50">
+                        {uploadsBusy['image_url'] ? '...' : 'Subir'}
+                      </button>
+                    </div>
                     {form.image_url && (
                       <img src={getImageUrl(form.image_url)} alt="Preview" className="mt-3 w-20 h-20 object-cover border border-[rgba(0,0,0,0.06)] rounded"
                         onError={e => { e.target.style.display = 'none'; }} />
                     )}
                   </div>
                   <div>
-                    <label className="admin-label">URL imagen secundaria</label>
-                    <input placeholder="https://..." value={form.image_url_2}
-                      onChange={e => setForm(f => ({ ...f, image_url_2: e.target.value }))} type="url"
-                      className="admin-input" />
+                    <label className="admin-label">Imagen secundaria</label>
+                    <div className="flex gap-2">
+                      <input placeholder="https://..." value={form.image_url_2}
+                        onChange={e => setForm(f => ({ ...f, image_url_2: e.target.value }))} type="url"
+                        className="admin-input flex-1" />
+                      <button type="button" disabled={uploadsBusy['image_url_2']}
+                        onClick={() => { setUploadTarget('image_url_2'); fileInputRef.current?.click(); }}
+                        className="px-3 py-2 border border-[var(--color-warm-gray)] text-xs hover:border-[var(--color-near-black)] transition-all disabled:opacity-50">
+                        {uploadsBusy['image_url_2'] ? '...' : 'Subir'}
+                      </button>
+                    </div>
                   </div>
                 </div>
                 <div>
